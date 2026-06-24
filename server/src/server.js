@@ -15,13 +15,15 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite qualquer localhost em desenvolvimento, mais a URL de produção configurada
-    const allowed = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
-    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS bloqueado para origem: ${origin}`));
-    }
+    // Sem origem (ex: curl, mobile) — permite
+    if (!origin) return callback(null, true);
+    // localhost qualquer porta
+    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    // Vercel (*.vercel.app) e domínio próprio configurado via env
+    if (/^https:\/\/.*\.vercel\.app$/.test(origin)) return callback(null, true);
+    const extra = (process.env.FRONTEND_URL || "").split(",").map(s => s.trim()).filter(Boolean);
+    if (extra.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS bloqueado para origem: ${origin}`));
   },
   credentials: true,
 }));

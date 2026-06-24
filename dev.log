@@ -16,3 +16,40 @@
 [next]  ✓ Ready in 2s
 [next]  ○ Compiling / ...
 [next]  ✓ Compiled / in 3.3s (519 modules)
+[next]  ✓ Compiled in 282ms (242 modules)
+[next]  ✓ Compiled /login in 430ms (537 modules)
+[next]  GET /login 200 in 553ms
+[next]  ✓ Compiled in 195ms (267 modules)
+[next]  ✓ Compiled in 134ms (267 modules)
+[next]  ✓ Compiled in 88ms (267 modules)
+[next]  ✓ Compiled in 84ms (267 modules)
+[next]  ✓ Compiled in 102ms (267 modules)
+[next]  ✓ Compiled in 75ms (267 modules)
+[next]  ✓ Compiled in 75ms (267 modules)
+[next]  ✓ Compiled in 103ms (267 modules)
+[next]  ✓ Compiled in 92ms (267 modules)
+[next]  ✓ Compiled in 105ms (267 modules)
+[next]  ✓ Compiled in 79ms (267 modules)
+[next]  ✓ Compiled in 87ms (267 modules)
+[next]  ✓ Compiled in 75ms (267 modules)
+[next]  ✓ Compiled in 75ms (267 modules)
+[next]  ✓ Compiled in 77ms (267 modules)
+[next]  ✓ Compiled in 73ms (267 modules)
+[next]  ✓ Compiled in 82ms (267 modules)
+[next]  ✓ Compiled in 78ms (267 modules)
+[next]  ✓ Compiled in 98ms (267 modules)
+[next]  ✓ Compiled in 86ms (267 modules)
+[next]  ✓ Compiled in 85ms (267 modules)
+[next]  ✓ Compiled in 67ms (267 modules)
+[next]  ✓ Compiled in 95ms (267 modules)
+[next]  ✓ Compiled in 70ms (267 modules)
+[next]  ✓ Compiled in 78ms (267 modules)
+[next]  ✓ Compiled in 90ms (267 modules)
+[next]  ✓ Compiled in 125ms (267 modules)
+[next]  ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
+[next]   ▲ Next.js 14.2.35
+[next]   - Local:        http://localhost:3000
+[next]   - Environments: .env.local
+[next] 
+[next]  ✓ Starting...
+[next]  ✓ Ready in 2.3s

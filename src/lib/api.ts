@@ -1,0 +1,166 @@
+import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, DashboardResumo } from "@/types";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("bp_token");
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401) {
+    // Token inválido ou expirado — limpa sessão e redireciona ao login
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("bp_token");
+      localStorage.removeItem("bp_user");
+      window.location.href = "/login";
+    }
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "Erro desconhecido" }));
+    throw new Error(error.message || `Erro ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Auth
+export async function login(email: string, senha: string): Promise<AuthResponse> {
+  return request<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, senha }),
+  });
+}
+
+// Funcionárias
+export async function getFuncionarias(): Promise<Funcionaria[]> {
+  return request<Funcionaria[]>("/funcionarias");
+}
+
+export async function createFuncionaria(data: { name: string; email: string; senha: string }): Promise<Funcionaria> {
+  return request<Funcionaria>("/funcionarias", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteFuncionaria(id: string): Promise<void> {
+  return request<void>(`/funcionarias/${id}`, { method: "DELETE" });
+}
+
+// Clientes
+export async function searchClientes(search: string): Promise<Cliente[]> {
+  return request<Cliente[]>(`/clientes?search=${encodeURIComponent(search)}`);
+}
+
+export async function createCliente(data: Omit<Cliente, "id" | "createdAt">): Promise<Cliente> {
+  return request<Cliente>("/clientes", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getHistoricoCliente(id: string): Promise<HistoricoCliente> {
+  return request<HistoricoCliente>(`/clientes/${id}/historico`);
+}
+
+export async function deleteCliente(id: string): Promise<void> {
+  return request<void>(`/clientes/${id}`, { method: "DELETE" });
+}
+
+// Entradas
+export async function createEntrada(payload: EntradaPayload): Promise<{ id: string; success: boolean }> {
+  const formData = new FormData();
+  formData.append("clienteId", payload.clienteId);
+  formData.append("avulsos", String(payload.avulsos));
+  formData.append("totalAvulso", String(payload.totalAvulso));
+  formData.append("totalGeral", String(payload.totalGeral));
+  formData.append("volumes", JSON.stringify(payload.volumes));
+
+  payload.pecas.forEach((peca, i) => {
+    formData.append(`pecas[${i}][descricao]`, peca.descricao);
+    if (peca.tamanho) formData.append(`pecas[${i}][tamanho]`, peca.tamanho);
+    formData.append(`pecas[${i}][foto]`, peca.foto, `peca_${i}.jpg`);
+  });
+
+  return request<{ id: string; success: boolean }>("/entrada", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function getEntradas(filters?: {
+  dataInicio?: string;
+  dataFim?: string;
+  clienteId?: string;
+  funcionariaId?: string;
+}): Promise<Entrada[]> {
+  const params = new URLSearchParams();
+  if (filters?.dataInicio) params.set("dataInicio", filters.dataInicio);
+  if (filters?.dataFim) params.set("dataFim", filters.dataFim);
+  if (filters?.clienteId) params.set("clienteId", filters.clienteId);
+  if (filters?.funcionariaId) params.set("funcionariaId", filters.funcionariaId);
+  return request<Entrada[]>(`/entradas?${params.toString()}`);
+}
+
+export async function getEntradaPdf(id: string): Promise<Blob> {
+  const token = getToken();
+  const res = await fetch(`${BASE_URL}/entradas/${id}/pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error("Erro ao baixar PDF");
+  return res.blob();
+}
+
+export async function reenviarPdf(id: string): Promise<void> {
+  return request<void>(`/entradas/${id}/reenviar-pdf`, { method: "POST" });
+}
+
+// Preços
+export async function getPrecos(): Promise<Preco[]> {
+  return request<Preco[]>("/precos");
+}
+
+export async function updatePrecos(precos: Preco[]): Promise<Preco[]> {
+  return request<Preco[]>("/precos", {
+    method: "PUT",
+    body: JSON.stringify({ precos }),
+  });
+}
+
+// Dashboard
+export async function getDashboardResumo(): Promise<DashboardResumo> {
+  return request<DashboardResumo>("/dashboard/resumo");
+}
+
+// Identificação de peça via IA (endpoint avulso)
+export async function identificarPeca(blob: Blob): Promise<{
+  descricao: string;
+  tipo: string;
+  tamanhoSugerido: string | null;
+  fotoPath?: string;
+}> {
+  const formData = new FormData();
+  formData.append("foto", blob, "peca.jpg");
+  return request("/entradas/identificar-peca", { method: "POST", body: formData });
+}

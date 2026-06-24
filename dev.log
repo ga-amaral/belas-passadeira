@@ -1,0 +1,18 @@
+
+> belas-passadeiras@1.0.0 dev
+> concurrently -n "next,api" -c "cyan,yellow" "next dev" "node server/src/server.js"
+
+[next]   ▲ Next.js 14.2.35
+[next]   - Local:        http://localhost:3000
+[next]   - Environments: .env.local
+[next] 
+[next]  ✓ Starting...
+[api] ✅ Supabase conectado
+[api] 
+[api] ✨ Belas Passadeiras API rodando em http://localhost:3001
+[api]    Ambiente: development
+[api]    Health:   http://localhost:3001/health
+[api] 
+[next]  ✓ Ready in 2s
+[next]  ○ Compiling / ...
+[next]  ✓ Compiled / in 3.3s (519 modules)

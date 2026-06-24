@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: "Inter", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #FAF7F2;
+    color: #4A3F35;
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), sans-serif;
+  }
+}
+
+@layer utilities {
+  .linen-bg {
+    background-color: #FAF7F2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAF7F2'/%3E%3Crect x='0' y='0' width='1' height='1' fill='rgba(212,175,55,0.04)'/%3E%3Crect x='2' y='2' width='1' height='1' fill='rgba(212,175,55,0.04)'/%3E%3C/svg%3E");
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #B8971F 100%);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #FAF7F2;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 2px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Thread spinner animation */
+@keyframes threadDraw {
+  0% { stroke-dashoffset: 120; opacity: 0.4; }
+  50% { stroke-dashoffset: 20; opacity: 1; }
+  100% { stroke-dashoffset: 120; opacity: 0.4; }
+}
+
+@keyframes needleWave {
+  0%, 100% { transform: rotate(-15deg) translateY(0); }
+  50% { transform: rotate(15deg) translateY(-4px); }
+}
+
+.thread-animate {
+  stroke-dasharray: 120;
+  animation: threadDraw 1.5s ease-in-out infinite;
+}
+
+.needle-animate {
+  animation: needleWave 1.5s ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: scaleIn 0.2s ease-out;
+}

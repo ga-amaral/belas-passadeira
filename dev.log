@@ -53,3 +53,32 @@
 [next] 
 [next]  ✓ Starting...
 [next]  ✓ Ready in 2.3s
+[next]  ○ Compiling /api/auth/login ...
+[next]  ✓ Compiled /api/auth/login in 960ms (181 modules)
+[next]  ⨯ Error: supabaseUrl is required.
+[next]     at validateSupabaseUrl (webpack-internal:///(rsc)/./node_modules/@supabase/supabase-js/dist/index.mjs:463:25)
+[next]     at new SupabaseClient (webpack-internal:///(rsc)/./node_modules/@supabase/supabase-js/dist/index.mjs:703:19)
+[next]     at createClient (webpack-internal:///(rsc)/./node_modules/@supabase/supabase-js/dist/index.mjs:930:9)
+[next]     at getDb (webpack-internal:///(rsc)/./src/lib/server/db.server.ts:10:79)
+[next]     at POST (webpack-internal:///(rsc)/./src/app/api/auth/login/route.ts:22:101)
+[next]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[next]     at async C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57228
+[next]     at async eT.execute (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:46851)
+[next]     at async eT.handle (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:58760)
+[next]     at async doRender (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:1366:42)
+[next]     at async cacheEntry.responseCache.get.routeKind (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:1588:28)
+[next]     at async DevServer.renderToResponseWithComponentsImpl (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:1496:28)
+[next]     at async DevServer.renderPageComponent (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:1924:24)
+[next]     at async DevServer.renderToResponseImpl (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:1962:32)
+[next]     at async DevServer.pipeImpl (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:922:25)
+[next]     at async NextNodeServer.handleCatchallRenderRequest (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\next-server.js:272:17)
+[next]     at async DevServer.handleRequestImpl (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\base-server.js:818:17)
+[next]     at async C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+[next]     at async Span.traceAsyncFn (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\trace\trace.js:154:20)
+[next]     at async DevServer.handleRequest (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+[next]     at async invokeRender (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\lib\router-server.js:179:21)
+[next]     at async handleRequest (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\lib\router-server.js:359:24)
+[next]     at async requestHandlerImpl (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\lib\router-server.js:383:13)
+[next]     at async Server.requestListener (C:\Users\ga-am\Documents\Sites\BelasPassadeiras\node_modules\next\dist\server\lib\start-server.js:141:13)
+[next]  POST /api/auth/login 500 in 1102ms
+[next]  ✓ Compiled in 856ms (203 modules)

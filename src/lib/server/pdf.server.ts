@@ -1,9 +1,18 @@
-import PDFDocumentLib from "pdfkit";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { uploadBuffer } from "./storage.server";
 
-const GOLD = "#D4AF37";
-const ROSE = "#C9A9A6";
-const BROWN = "#4A3F35";
+const H = 841.89; // A4 height pts
+const W = 595.28; // A4 width pts
+const M = 50;     // margin
+
+const GOLD  = rgb(0.831, 0.686, 0.216);
+const ROSE  = rgb(0.788, 0.663, 0.651);
+const BROWN = rgb(0.290, 0.247, 0.208);
+const WHITE = rgb(1, 1, 1);
+const CREAM = rgb(0.961, 0.941, 0.910);
+const LGRAY = rgb(0.878, 0.847, 0.820);
+
+function y(fromTop: number) { return H - fromTop; }
 
 export async function gerarPdf({ order, client, items, employee }: {
   order: Record<string, unknown>;
@@ -12,96 +21,122 @@ export async function gerarPdf({ order, client, items, employee }: {
   employee: Record<string, unknown>;
 }): Promise<{ publicUrl: string; filename: string }> {
 
-  const buffer = await new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocumentLib({ size: "A4", margins: { top: 50, left: 50, right: 50, bottom: 50 } });
-    const chunks: Buffer[] = [];
-    doc.on("data", (c: Buffer) => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  const pdfDoc = await PDFDocument.create();
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // Header
-    doc.rect(0, 0, doc.page.width, 100).fill(BROWN);
-    doc.fillColor("white").font("Helvetica-Bold").fontSize(22).text("Belas Passadeiras", 50, 30);
-    doc.font("Helvetica").fontSize(10).fillColor(GOLD).text("Lavanderia & Passadoria", 50, 58);
-    doc.fillColor("white").fontSize(9).text(`Pedido #${order.id}`, doc.page.width - 150, 35, { align: "right" });
+  let page = pdfDoc.addPage([W, H]);
 
-    const dateStr = order.created_at
-      ? new Date(order.created_at as string).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-      : new Date().toLocaleDateString("pt-BR");
-    doc.text(dateStr, doc.page.width - 250, 50, { align: "right" });
+  // Header background
+  page.drawRectangle({ x: 0, y: y(100), width: W, height: 100, color: BROWN });
+  page.drawText("Belas Passadeiras", { x: M, y: y(48), font: bold, size: 22, color: WHITE });
+  page.drawText("Lavanderia & Passadoria", { x: M, y: y(70), font: regular, size: 10, color: GOLD });
+  page.drawText(`Pedido #${order.id}`, { x: W - 160, y: y(42), font: bold, size: 9, color: WHITE });
 
-    let y = 120;
+  const dateStr = order.created_at
+    ? new Date(order.created_at as string).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : new Date().toLocaleDateString("pt-BR");
+  page.drawText(dateStr, { x: W - 160, y: y(58), font: regular, size: 8, color: WHITE });
 
-    // Cliente
-    section(doc, "Cliente", y); y += 22;
-    row(doc, "Nome", String(client.name || ""), y); y += 18;
-    row(doc, "WhatsApp", String(client.whatsapp || ""), y); y += 18;
-    if (client.address_city) {
-      const addr = [client.address_street, client.address_number, client.address_neighborhood, client.address_city, client.address_state].filter(Boolean).join(", ");
-      row(doc, "Endereço", addr, y); y += 18;
+  let cursor = 125;
+
+  function section(title: string) {
+    page.drawText(title, { x: M, y: y(cursor), font: bold, size: 11, color: BROWN });
+    page.drawLine({ start: { x: M, y: y(cursor + 15) }, end: { x: M + bold.widthOfTextAtSize(title, 11), y: y(cursor + 15) }, thickness: 1, color: GOLD });
+    cursor += 22;
+  }
+
+  function row(label: string, value: string) {
+    const safe = value.replace(/[^\x00-\xFF]/g, "?");
+    page.drawText(`${label}:`, { x: M, y: y(cursor), font: bold, size: 9, color: ROSE });
+    page.drawText(safe || "—", { x: M + 95, y: y(cursor), font: regular, size: 9, color: BROWN, maxWidth: 350 });
+    cursor += 18;
+  }
+
+  function divider() {
+    page.drawLine({ start: { x: M, y: y(cursor) }, end: { x: W - M, y: y(cursor) }, thickness: 0.5, color: LGRAY });
+    cursor += 14;
+  }
+
+  function checkPage() {
+    if (cursor > H - 120) {
+      page = pdfDoc.addPage([W, H]);
+      cursor = 50;
     }
-    if (client.preferences) { row(doc, "Preferências", String(client.preferences), y); y += 18; }
+  }
 
-    y += 10; divider(doc, y); y += 16;
-    row(doc, "Atendida por", String((employee as Record<string, unknown>)?.name || "—"), y); y += 26;
+  // Cliente
+  section("Cliente");
+  row("Nome", String(client.name || ""));
+  row("WhatsApp", String(client.whatsapp || ""));
+  if (client.address_city) {
+    const addr = [client.address_street, client.address_number, client.address_city, client.address_state].filter(Boolean).join(", ");
+    row("Endereco", addr);
+  }
+  if (client.preferences) row("Preferencias", String(client.preferences));
 
-    // Peças
-    section(doc, "Peças registradas", y); y += 22;
-    doc.font("Helvetica").fontSize(9).fillColor(BROWN);
-    items.forEach((item, i) => {
-      if (y > doc.page.height - 120) { doc.addPage(); y = 50; }
-      const desc = String(item.manual_description || item.ai_description || "Peça");
-      const size = item.size ? ` – ${item.size}` : "";
-      doc.rect(50, y, doc.page.width - 100, 20).fill("#F5F0E8");
-      doc.fillColor(BROWN).font("Helvetica-Bold").fontSize(9).text(`${i + 1}.`, 55, y + 5, { width: 20 });
-      doc.font("Helvetica").text(`${desc}${size}`, 75, y + 5, { width: doc.page.width - 130 });
-      y += 24;
-    });
+  cursor += 8; divider();
+  row("Atendida por", String((employee as Record<string, unknown>)?.name || "—"));
+  cursor += 10;
 
-    y += 10; divider(doc, y); y += 16;
-
-    // Financeiro
-    section(doc, "Resumo financeiro", y); y += 22;
-    let volumes: Record<string, unknown>[] = [];
-    try { volumes = JSON.parse(String(order.volumes_json || "[]")); } catch { /**/ }
-    volumes.forEach((v) => {
-      if (Number(v.quantidade) > 0) {
-        lineItem(doc, `${v.nome} × ${v.quantidade}`, brl(Number(v.quantidade) * Number(v.preco)), y);
-        y += 18;
-      }
-    });
-    if (Number(order.avulsos) > 0) { lineItem(doc, `Peças avulsas × ${order.avulsos}`, "—", y); y += 18; }
-
-    y += 8;
-    doc.rect(50, y, doc.page.width - 100, 36).fill(GOLD);
-    doc.fillColor("white").font("Helvetica-Bold").fontSize(13).text("Total", 60, y + 10);
-    doc.fontSize(15).text(brl(Number(order.total_amount)), 0, y + 8, { align: "right", width: doc.page.width - 60 });
-    y += 56;
-
-    doc.fontSize(8).fillColor(ROSE).font("Helvetica").text("Obrigada pela preferência! Belas Passadeiras", 50, y, { align: "center" });
-    doc.end();
+  // Peças
+  section("Pecas registradas");
+  items.forEach((item, i) => {
+    checkPage();
+    const desc = String(item.manual_description || item.ai_description || "Peca").replace(/[^\x00-\xFF]/g, "?");
+    const size = item.size ? ` - ${item.size}` : "";
+    page.drawRectangle({ x: M, y: y(cursor + 3), width: W - M * 2, height: 20, color: CREAM });
+    page.drawText(`${i + 1}. ${desc}${size}`, { x: M + 6, y: y(cursor + 3) + 5, font: regular, size: 9, color: BROWN, maxWidth: W - M * 2 - 12 });
+    cursor += 24;
   });
+
+  cursor += 8; divider();
+
+  // Financeiro
+  section("Resumo financeiro");
+  let volumes: Record<string, unknown>[] = [];
+  try { volumes = JSON.parse(String(order.volumes_json || "[]")); } catch { /**/ }
+
+  volumes.forEach((v) => {
+    if (Number(v.quantidade) > 0) {
+      checkPage();
+      const label = `${String(v.nome).replace(/[^\x00-\xFF]/g, "?")} x ${v.quantidade}`;
+      const val = brl(Number(v.quantidade) * Number(v.preco));
+      page.drawText(label, { x: M, y: y(cursor), font: regular, size: 9, color: BROWN });
+      page.drawText(val, { x: W - M - regular.widthOfTextAtSize(val, 9), y: y(cursor), font: regular, size: 9, color: BROWN });
+      cursor += 18;
+    }
+  });
+
+  if (Number(order.avulsos) > 0) {
+    checkPage();
+    const label = `Pecas avulsas x ${order.avulsos}`;
+    page.drawText(label, { x: M, y: y(cursor), font: regular, size: 9, color: BROWN });
+    cursor += 18;
+  }
+
+  cursor += 8;
+  checkPage();
+  // Total box
+  page.drawRectangle({ x: M, y: y(cursor + 36), width: W - M * 2, height: 36, color: GOLD });
+  page.drawText("Total", { x: M + 10, y: y(cursor + 20), font: bold, size: 13, color: WHITE });
+  const total = brl(Number(order.total_amount));
+  page.drawText(total, { x: W - M - bold.widthOfTextAtSize(total, 15) - 10, y: y(cursor + 18), font: bold, size: 15, color: WHITE });
+  cursor += 52;
+
+  checkPage();
+  page.drawText("Obrigada pela preferencia! Belas Passadeiras", {
+    x: W / 2 - 130, y: y(cursor + 10), font: regular, size: 8, color: ROSE,
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const buffer = Buffer.from(pdfBytes);
 
   const filename = `pedido_${order.id}_${Date.now()}.pdf`;
   const publicUrl = await uploadBuffer("pdfs", filename, buffer, "application/pdf");
   return { publicUrl, filename };
 }
 
-function section(doc: PDFKit.PDFDocument, text: string, y: number) {
-  doc.font("Helvetica-Bold").fontSize(11).fillColor(BROWN).text(text, 50, y);
-  doc.moveTo(50, y + 14).lineTo(50 + doc.widthOfString(text), y + 14).stroke(GOLD);
-}
-function row(doc: PDFKit.PDFDocument, label: string, value: string, y: number) {
-  doc.font("Helvetica-Bold").fontSize(9).fillColor(ROSE).text(`${label}:`, 50, y, { width: 90 });
-  doc.font("Helvetica").fontSize(9).fillColor(BROWN).text(value || "—", 145, y, { width: 350 });
-}
-function lineItem(doc: PDFKit.PDFDocument, label: string, value: string, y: number) {
-  doc.font("Helvetica").fontSize(9).fillColor(BROWN).text(label, 50, y);
-  doc.text(value, 0, y, { align: "right", width: doc.page.width - 60 });
-}
-function divider(doc: PDFKit.PDFDocument, y: number) {
-  doc.moveTo(50, y).lineTo(doc.page.width - 50, y).lineWidth(0.5).stroke("#E0D8CE");
-}
 function brl(v: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v ?? 0);
+  return `R$ ${(v ?? 0).toFixed(2).replace(".", ",")}`;
 }

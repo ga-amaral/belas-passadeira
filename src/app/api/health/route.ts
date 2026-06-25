@@ -8,6 +8,8 @@ export async function GET() {
     JWT_SECRET: !!process.env.JWT_SECRET,
     OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
     EVOLUTION_API_URL: !!process.env.EVOLUTION_API_URL,
+    EVOLUTION_API_KEY: !!process.env.EVOLUTION_API_KEY,
+    EVOLUTION_INSTANCE: !!process.env.EVOLUTION_INSTANCE,
   };
 
   let dbOk = false;
@@ -20,5 +22,20 @@ export async function GET() {
     dbError = String(e);
   }
 
-  return NextResponse.json({ status: "ok", vars, db: dbOk, dbError });
+  let pdfOk = false;
+  let pdfError = "";
+  try {
+    const { gerarPdf } = await import("@/lib/server/pdf.server");
+    await gerarPdf({
+      order: { id: "TEST", created_at: new Date().toISOString(), total_amount: 0, volumes_json: "[]", avulsos: 0 },
+      client: { name: "Teste", whatsapp: "11999999999" },
+      items: [],
+      employee: { name: "Admin" },
+    });
+    pdfOk = true;
+  } catch (e) {
+    pdfError = String(e);
+  }
+
+  return NextResponse.json({ status: "ok", vars, db: dbOk, dbError, pdf: pdfOk, pdfError });
 }

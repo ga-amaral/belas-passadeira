@@ -1,3 +1,4 @@
+import PDFDocumentLib from "pdfkit";
 import { uploadBuffer } from "./storage.server";
 
 const GOLD = "#D4AF37";
@@ -10,10 +11,9 @@ export async function gerarPdf({ order, client, items, employee }: {
   items: Record<string, unknown>[];
   employee: Record<string, unknown>;
 }): Promise<{ publicUrl: string; filename: string }> {
-  const PDFDocument = (await import("pdfkit")).default;
 
   const buffer = await new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margins: { top: 50, left: 50, right: 50, bottom: 50 } });
+    const doc = new PDFDocumentLib({ size: "A4", margins: { top: 50, left: 50, right: 50, bottom: 50 } });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -24,10 +24,11 @@ export async function gerarPdf({ order, client, items, employee }: {
     doc.fillColor("white").font("Helvetica-Bold").fontSize(22).text("Belas Passadeiras", 50, 30);
     doc.font("Helvetica").fontSize(10).fillColor(GOLD).text("Lavanderia & Passadoria", 50, 58);
     doc.fillColor("white").fontSize(9).text(`Pedido #${order.id}`, doc.page.width - 150, 35, { align: "right" });
-    doc.text(
-      new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeStyle: "short" }).format(new Date((order.created_at as string) || Date.now())),
-      doc.page.width - 250, 50, { align: "right" }
-    );
+
+    const dateStr = order.created_at
+      ? new Date(order.created_at as string).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+      : new Date().toLocaleDateString("pt-BR");
+    doc.text(dateStr, doc.page.width - 250, 50, { align: "right" });
 
     let y = 120;
 

@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     await db.from("orders").update({ whatsapp_sent: whatsappSent }).eq("id", orderId);
     void filename;
   } catch (err) {
-    console.error("[PDF/WhatsApp]", err);
+    console.error("[PDF/WhatsApp] ERRO:", String(err));
   }
 
   return NextResponse.json({

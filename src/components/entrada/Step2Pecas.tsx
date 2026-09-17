@@ -29,14 +29,22 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
   const handleCaptura = useCallback(async (blob: Blob, dataUrl: string) => {
     setProcessando(true);
     try {
-      const resultado = await apiIdentificarPeca(blob).catch(() => mockDescricaoIA());
+      const resultado = await apiIdentificarPeca(blob).catch((err) => {
+        console.warn("[IA] Falha ao identificar via OpenAI, usando mock:", err);
+        return mockDescricaoIA();
+      });
+      const tamanhoDefinido =
+        ("tamanhoSugerido" in resultado && resultado.tamanhoSugerido)
+          ? (resultado as { tamanhoSugerido: string | null }).tamanhoSugerido || undefined
+          : (resultado.tipo === "lencol" ? "Casal" : resultado.tipo === "toalha" ? "Banho" : undefined);
+
       const novaPeca: PecaItem = {
         id: String(Date.now()),
         foto: dataUrl,
         fotoBlob: blob,
-        descricao: resultado.descricao,
-        tipo: resultado.tipo as PecaItem["tipo"],
-        tamanho: resultado.tipo === "lencol" ? "Casal" : resultado.tipo === "toalha" ? "Banho" : undefined,
+        descricao: resultado.descricao || "Peça de roupa",
+        tipo: (["lencol", "toalha", "outro"].includes(resultado.tipo) ? resultado.tipo : "outro") as PecaItem["tipo"],
+        tamanho: tamanhoDefinido,
       };
       onChange([...pecas, novaPeca]);
       toast.success("Peça identificada com sucesso!");

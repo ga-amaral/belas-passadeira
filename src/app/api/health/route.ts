@@ -10,6 +10,9 @@ export async function GET() {
     EVOLUTION_API_URL: !!process.env.EVOLUTION_API_URL,
     EVOLUTION_API_KEY: !!process.env.EVOLUTION_API_KEY,
     EVOLUTION_INSTANCE: !!process.env.EVOLUTION_INSTANCE,
+    WAHA_API_URL: !!process.env.WAHA_API_URL,
+    WAHA_API_KEY: !!process.env.WAHA_API_KEY,
+    WAHA_SESSION: !!process.env.WAHA_SESSION,
   };
 
   let dbOk = false;

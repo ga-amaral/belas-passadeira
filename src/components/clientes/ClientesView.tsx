@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import {
   Search, UserCircle, Clock, X, ChevronDown, ChevronUp,
-  Image as ImageIcon, Plus, Trash2,
+  Image as ImageIcon, Plus, Trash2, Pencil,
 } from "lucide-react";
 import { Cliente, HistoricoCliente, HistoricoPedido } from "@/types";
-import { searchClientes, getHistoricoCliente, createCliente, deleteCliente } from "@/lib/api";
+import { searchClientes, getHistoricoCliente, createCliente, updateCliente, deleteCliente } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { maskCpfCnpj, maskWhatsapp, maskCep, unmask, formatCurrency, formatDate } from "@/lib/masks";
 import Input from "@/components/ui/Input";
@@ -152,6 +152,12 @@ export default function ClientesView() {
   const [formErrors, setFormErrors] = useState<Partial<typeof FORM_EMPTY>>({});
   const [saving, setSaving] = useState(false);
 
+  // Edição de cliente
+  const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
+  const [formEdit, setFormEdit] = useState(FORM_EMPTY);
+  const [formErrorsEdit, setFormErrorsEdit] = useState<Partial<typeof FORM_EMPTY>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+
   // Confirmação de delete
   const [confirmDelete, setConfirmDelete] = useState<Cliente | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -213,6 +219,58 @@ export default function ClientesView() {
     }
   }
 
+  function handleAbrirEdicao(c: Cliente) {
+    setClienteEditando(c);
+    setFormEdit({
+      nome: c.nome || "",
+      cpfCnpj: c.cpfCnpj ? maskCpfCnpj(c.cpfCnpj) : "",
+      whatsapp: c.whatsapp ? maskWhatsapp(c.whatsapp) : "",
+      logradouro: c.logradouro || "",
+      numero: c.numero || "",
+      complemento: c.complemento || "",
+      bairro: c.bairro || "",
+      cidade: c.cidade || "",
+      estado: c.estado || "",
+      cep: c.cep ? maskCep(c.cep) : "",
+      preferencias: Array.isArray(c.preferencias) ? c.preferencias.join(", ") : (c.preferencias || ""),
+    });
+    setFormErrorsEdit({});
+  }
+
+  async function handleAtualizar() {
+    if (!clienteEditando) return;
+    const errs: Partial<typeof FORM_EMPTY> = {};
+    if (!formEdit.nome.trim()) errs.nome = "Nome é obrigatório.";
+    if (!formEdit.whatsapp.trim()) errs.whatsapp = "WhatsApp é obrigatório.";
+    else if (unmask(formEdit.whatsapp).length < 10) errs.whatsapp = "WhatsApp inválido.";
+    setFormErrorsEdit(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setSavingEdit(true);
+    try {
+      const atualizado = await updateCliente(clienteEditando.id, {
+        nome: formEdit.nome.trim(),
+        cpfCnpj: unmask(formEdit.cpfCnpj) || undefined,
+        whatsapp: formEdit.whatsapp.trim(),
+        logradouro: formEdit.logradouro || undefined,
+        numero: formEdit.numero || undefined,
+        complemento: formEdit.complemento || undefined,
+        bairro: formEdit.bairro || undefined,
+        cidade: formEdit.cidade || undefined,
+        estado: formEdit.estado || undefined,
+        cep: unmask(formEdit.cep) || undefined,
+        preferencias: formEdit.preferencias ? formEdit.preferencias.split(",").map((s) => s.trim()).filter(Boolean) : [],
+      });
+      toast.success("Cliente atualizado com sucesso!");
+      setClientes((prev) => prev.map((c) => (c.id === clienteEditando.id ? { ...c, ...atualizado } : c)));
+      setClienteEditando(null);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar cliente.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   async function handleDelete() {
     if (!confirmDelete) return;
     setDeleting(true);
@@ -266,13 +324,19 @@ export default function ClientesView() {
           {filtered.map((c) => (
             <div
               key={c.id}
-              className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8"
+              onClick={() => handleAbrirEdicao(c)}
+              className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8 hover:border-brand-gold/30 hover:shadow-md cursor-pointer transition-all group"
             >
-              <div className="w-10 h-10 rounded-full bg-brand-rose/15 flex items-center justify-center shrink-0">
-                <span className="font-semibold text-brand-rose">{c.nome.charAt(0).toUpperCase()}</span>
+              <div className="w-10 h-10 rounded-full bg-brand-rose/15 group-hover:bg-brand-gold/20 flex items-center justify-center shrink-0 transition-colors">
+                <span className="font-semibold text-brand-rose group-hover:text-brand-gold-dark transition-colors">{c.nome.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-poppins font-semibold text-brand-text truncate">{c.nome}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-poppins font-semibold text-brand-text truncate group-hover:text-brand-gold-dark transition-colors">{c.nome}</p>
+                  <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-brand-bg text-brand-text/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Editar
+                  </span>
+                </div>
                 <p className="text-xs text-brand-text/50">{c.whatsapp}</p>
                 {(c.cidade || c.bairro) && (
                   <p className="text-xs text-brand-text/40">
@@ -280,11 +344,19 @@ export default function ClientesView() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => handleAbrirEdicao(c)}
+                  className="flex items-center gap-1 text-sm text-brand-gold hover:text-brand-gold-dark font-poppins px-2 py-1 rounded-lg hover:bg-brand-gold/10 transition-colors"
+                  title="Editar dados do cliente"
+                >
+                  <Pencil size={14} strokeWidth={1.5} />
+                  Editar
+                </button>
                 <button
                   onClick={() => handleVerHistorico(c)}
                   disabled={loadingHistorico}
-                  className="flex items-center gap-1.5 text-sm text-brand-gold hover:text-brand-gold-dark font-poppins transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 text-sm text-brand-text/60 hover:text-brand-text font-poppins px-2 py-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-50"
                 >
                   <Clock size={15} strokeWidth={1.5} />
                   Histórico
@@ -398,6 +470,78 @@ export default function ClientesView() {
           <div className="flex gap-3 mt-2 justify-end">
             <Button variant="outline" onClick={() => setShowNovo(false)}>Cancelar</Button>
             <Button onClick={handleSalvar} loading={saving}>Cadastrar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Editar Cliente */}
+      <Modal
+        open={!!clienteEditando}
+        onClose={() => setClienteEditando(null)}
+        title={clienteEditando ? `Editar Cliente – ${clienteEditando.nome}` : "Editar Cliente"}
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Nome completo"
+            value={formEdit.nome}
+            onChange={(e) => { setFormEdit((p) => ({ ...p, nome: e.target.value })); setFormErrorsEdit((p) => ({ ...p, nome: undefined })); }}
+            error={formErrorsEdit.nome}
+            placeholder="Nome do cliente"
+            required
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="CPF / CNPJ"
+              value={formEdit.cpfCnpj}
+              onChange={(e) => setFormEdit((p) => ({ ...p, cpfCnpj: maskCpfCnpj(e.target.value) }))}
+              placeholder="000.000.000-00"
+              maxLength={18}
+            />
+            <Input
+              label="WhatsApp"
+              value={formEdit.whatsapp}
+              onChange={(e) => { setFormEdit((p) => ({ ...p, whatsapp: maskWhatsapp(e.target.value) })); setFormErrorsEdit((p) => ({ ...p, whatsapp: undefined })); }}
+              error={formErrorsEdit.whatsapp}
+              placeholder="(11) 99999-9999"
+              maxLength={15}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <Input label="Logradouro" value={formEdit.logradouro} onChange={(e) => setFormEdit((p) => ({ ...p, logradouro: e.target.value }))} />
+            </div>
+            <Input label="Número" value={formEdit.numero} onChange={(e) => setFormEdit((p) => ({ ...p, numero: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Complemento" value={formEdit.complemento} onChange={(e) => setFormEdit((p) => ({ ...p, complemento: e.target.value }))} />
+            <Input label="Bairro" value={formEdit.bairro} onChange={(e) => setFormEdit((p) => ({ ...p, bairro: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="CEP" value={formEdit.cep} onChange={(e) => setFormEdit((p) => ({ ...p, cep: maskCep(e.target.value) }))} placeholder="00000-000" maxLength={9} />
+            <Input label="Cidade" value={formEdit.cidade} onChange={(e) => setFormEdit((p) => ({ ...p, cidade: e.target.value }))} />
+            <div>
+              <label className="text-sm font-medium font-poppins text-brand-text/80 block mb-1.5">Estado</label>
+              <select
+                value={formEdit.estado}
+                onChange={(e) => setFormEdit((p) => ({ ...p, estado: e.target.value }))}
+                className="w-full rounded-xl border border-brand-gold/20 bg-white px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold"
+              >
+                <option value="">UF</option>
+                {ESTADOS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+              </select>
+            </div>
+          </div>
+          <Input
+            label="Preferências especiais"
+            value={formEdit.preferencias}
+            onChange={(e) => setFormEdit((p) => ({ ...p, preferencias: e.target.value }))}
+            placeholder="Cabides, Sem amaciante, ... (separadas por vírgula)"
+            hint="Separe as preferências por vírgula"
+          />
+          <div className="flex gap-3 mt-2 justify-end">
+            <Button variant="outline" onClick={() => setClienteEditando(null)}>Cancelar</Button>
+            <Button onClick={handleAtualizar} loading={savingEdit}>Salvar Alterações</Button>
           </div>
         </div>
       </Modal>

@@ -35,6 +35,28 @@ router.post("/", async (req, res) => {
   return res.status(201).json({ ...data, ativo: true });
 });
 
+router.put("/:id", async (req, res) => {
+  const { name, email, senha, active } = req.body;
+  const updateData = {};
+  if (name) updateData.name = name.trim();
+  if (email) updateData.email = email.toLowerCase().trim();
+  if (typeof active === "boolean") updateData.active = active;
+  if (senha && senha.length >= 6) {
+    updateData.password_hash = await bcrypt.hash(senha, 10);
+  }
+
+  const { data, error } = await getClient()
+    .from("users")
+    .update(updateData)
+    .eq("id", req.params.id)
+    .eq("role", "funcionaria")
+    .select("id, name, email, active, created_at")
+    .single();
+
+  if (error) return res.status(500).json({ message: error.message });
+  return res.json({ ...data, ativo: data.active });
+});
+
 router.delete("/:id", async (req, res) => {
   const { data: user } = await getClient().from("users").select("id, role").eq("id", req.params.id).single();
   if (!user) return res.status(404).json({ message: "Funcionária não encontrada." });

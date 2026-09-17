@@ -29,30 +29,69 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     setError(null);
     setTentando(true);
 
-    // Tenta constraints progressivamente mais permissivos
-    const tentativas = [
-      { video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } } },
-      { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+    // 1. Verifica contexto seguro (HTTPS ou localhost)
+    if (typeof window !== "undefined" && !window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      setError("O navegador bloqueia o uso da câmera em conexões HTTP sem SSL. Acesse usando HTTPS ou por localhost.");
+      setTentando(false);
+      return;
+    }
+
+    // 2. Verifica se a API de mídia existe
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError("Seu navegador não suporta acesso direto à câmera. Use o botão abaixo para enviar foto.");
+      setTentando(false);
+      return;
+    }
+
+    // 3. Tenta constraints progressivamente mais permissivos (usando 'ideal' para não falhar em webcam desktop)
+    const tentativas: MediaStreamConstraints[] = [
+      { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: { facingMode: { ideal: "environment" } } },
+      { video: { facingMode: { ideal: "user" } } },
       { video: true },
     ];
+
+    let lastError: unknown = null;
 
     for (const constraint of tentativas) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraint);
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
+          const video = videoRef.current;
+          video.srcObject = stream;
+          video.onloadedmetadata = () => {
+            video.play().catch((err) => {
+              console.warn("[WebcamCapture] Erro ao reproduzir vídeo:", err);
+            });
+            setReady(true);
+          };
+        } else {
+          setReady(true);
         }
-        setReady(true);
         setTentando(false);
         return;
-      } catch {
-        // tenta próximo
+      } catch (err) {
+        lastError = err;
       }
     }
 
-    setError("Câmera não disponível ou permissão negada. Use o botão abaixo para enviar uma foto.");
+    if (lastError instanceof Error) {
+      console.error("[WebcamCapture] Falha ao acessar câmera:", lastError);
+      if (lastError.name === "NotAllowedError" || lastError.name === "PermissionDeniedError") {
+        setError("Permissão negada no navegador. Clique no ícone de cadeado/câmera na barra de endereço para permitir o acesso.");
+      } else if (lastError.name === "NotReadableError" || lastError.name === "TrackStartError") {
+        setError("A câmera está em uso por outro aplicativo (Zoom, Teams, etc.) ou travada pelo Windows.");
+      } else if (lastError.name === "NotFoundError" || lastError.name === "DevicesNotFoundError") {
+        setError("Nenhuma câmera foi encontrada pelo navegador.");
+      } else if (lastError.name === "OverconstrainedError") {
+        setError("A resolução solicitada não é suportada pela câmera.");
+      } else {
+        setError(`Erro na câmera: ${lastError.message || lastError.name}. Use o envio de foto.`);
+      }
+    } else {
+      setError("Câmera não disponível ou permissão negada. Use o botão abaixo para enviar uma foto.");
+    }
     setTentando(false);
   }, [pararStream]);
 

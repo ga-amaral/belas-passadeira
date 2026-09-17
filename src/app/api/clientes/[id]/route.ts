@@ -21,6 +21,44 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(mapCliente(data));
 }
 
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await authenticate(req);
+  if ("error" in auth) return NextResponse.json({ message: auth.error }, { status: auth.status });
+
+  const body = await req.json().catch(() => ({}));
+  const { nome, cpfCnpj, whatsapp, logradouro, numero, complemento, bairro, cidade, estado, cep, preferencias } = body;
+
+  if (!nome || !whatsapp) {
+    return NextResponse.json({ message: "Nome e WhatsApp são obrigatórios." }, { status: 400 });
+  }
+
+  const docType = cpfCnpj ? (String(cpfCnpj).replace(/\D/g, "").length <= 11 ? "cpf" : "cnpj") : null;
+  const prefStr = Array.isArray(preferencias) ? preferencias.join(", ") : (preferencias || null);
+
+  const { data, error } = await getDb()
+    .from("clients")
+    .update({
+      name: nome.trim(),
+      doc_type: docType,
+      doc_number: cpfCnpj || null,
+      address_street: logradouro || null,
+      address_number: numero || null,
+      address_complement: complemento || null,
+      address_neighborhood: bairro || null,
+      address_city: cidade || null,
+      address_state: estado || null,
+      address_zip: cep || null,
+      whatsapp: String(whatsapp).trim(),
+      preferences: prefStr,
+    })
+    .eq("id", params.id)
+    .select("*")
+    .single();
+
+  if (error) return NextResponse.json({ message: error.message }, { status: 500 });
+  return NextResponse.json(mapCliente(data));
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await authenticate(req);
   if ("error" in auth) return NextResponse.json({ message: auth.error }, { status: auth.status });

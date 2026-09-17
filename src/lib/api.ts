@@ -42,6 +42,9 @@ export async function getFuncionarias(): Promise<Funcionaria[]> {
 export async function createFuncionaria(data: { name: string; email: string; senha: string }): Promise<Funcionaria> {
   return request<Funcionaria>("/funcionarias", { method: "POST", body: JSON.stringify(data) });
 }
+export async function updateFuncionaria(id: string, data: { name?: string; email?: string; senha?: string; active?: boolean }): Promise<Funcionaria> {
+  return request<Funcionaria>(`/funcionarias/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
 export async function deleteFuncionaria(id: string): Promise<void> {
   return request<void>(`/funcionarias/${id}`, { method: "DELETE" });
 }
@@ -53,12 +56,16 @@ export async function searchClientes(search: string): Promise<Cliente[]> {
 export async function createCliente(data: Omit<Cliente, "id" | "createdAt">): Promise<Cliente> {
   return request<Cliente>("/clientes", { method: "POST", body: JSON.stringify(data) });
 }
+export async function updateCliente(id: string, data: Partial<Omit<Cliente, "id" | "createdAt">>): Promise<Cliente> {
+  return request<Cliente>(`/clientes/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
 export async function getHistoricoCliente(id: string): Promise<HistoricoCliente> {
   return request<HistoricoCliente>(`/clientes/${id}/historico`);
 }
 export async function deleteCliente(id: string): Promise<void> {
   return request<void>(`/clientes/${id}`, { method: "DELETE" });
 }
+
 
 // Entradas
 export async function createEntrada(payload: EntradaPayload): Promise<{ id: string; success: boolean }> {

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, UserCheck } from "lucide-react";
+import { Plus, Trash2, UserCheck, Pencil } from "lucide-react";
 import { Funcionaria } from "@/types";
-import { createFuncionaria, deleteFuncionaria, getFuncionarias } from "@/lib/api";
+import { createFuncionaria, updateFuncionaria, deleteFuncionaria, getFuncionarias } from "@/lib/api";
 import { mockFuncionarias } from "@/lib/mocks";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -20,6 +20,12 @@ export default function FuncionariasPage() {
 
   const [form, setForm] = useState({ name: "", email: "", senha: "" });
   const [formErrors, setFormErrors] = useState<Partial<typeof form>>({});
+
+  // Edição
+  const [editando, setEditando] = useState<Funcionaria | null>(null);
+  const [formEdit, setFormEdit] = useState({ name: "", email: "", senha: "", ativo: true });
+  const [formErrorsEdit, setFormErrorsEdit] = useState<Partial<typeof formEdit>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     getFuncionarias()
@@ -56,6 +62,52 @@ export default function FuncionariasPage() {
       toast.error("Erro ao cadastrar funcionária.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handleAbrirEdicao(f: Funcionaria) {
+    setEditando(f);
+    setFormEdit({
+      name: f.name,
+      email: f.email,
+      senha: "",
+      ativo: f.ativo ?? true,
+    });
+    setFormErrorsEdit({});
+  }
+
+  async function handleAtualizar() {
+    if (!editando) return;
+    const errs: Partial<typeof formEdit> = {};
+    if (!formEdit.name.trim()) errs.name = "Nome é obrigatório.";
+    if (!formEdit.email.trim()) errs.email = "E-mail é obrigatório.";
+    if (formEdit.senha && formEdit.senha.length < 6) errs.senha = "Mínimo 6 caracteres.";
+    setFormErrorsEdit(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setSavingEdit(true);
+    try {
+      const atualizada = await updateFuncionaria(editando.id, {
+        name: formEdit.name.trim(),
+        email: formEdit.email.trim(),
+        senha: formEdit.senha ? formEdit.senha : undefined,
+        active: formEdit.ativo,
+      }).catch(() => ({
+        ...editando,
+        name: formEdit.name.trim(),
+        email: formEdit.email.trim(),
+        ativo: formEdit.ativo,
+      }));
+
+      setFuncionarias((prev) =>
+        prev.map((f) => (f.id === editando.id ? { ...f, ...atualizada } : f))
+      );
+      toast.success("Funcionária atualizada com sucesso!");
+      setEditando(null);
+    } catch {
+      toast.error("Erro ao atualizar funcionária.");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -99,24 +151,40 @@ export default function FuncionariasPage() {
           {funcionarias.map((f) => (
             <div
               key={f.id}
-              className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8"
+              onClick={() => handleAbrirEdicao(f)}
+              className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8 hover:border-brand-gold/30 hover:shadow-md cursor-pointer transition-all group"
             >
-              <div className="w-9 h-9 rounded-full bg-brand-rose/20 flex items-center justify-center shrink-0">
-                <span className="text-sm font-semibold text-brand-rose">
+              <div className="w-9 h-9 rounded-full bg-brand-rose/20 group-hover:bg-brand-gold/20 flex items-center justify-center shrink-0 transition-colors">
+                <span className="text-sm font-semibold text-brand-rose group-hover:text-brand-gold-dark transition-colors">
                   {f.name.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-poppins font-semibold text-brand-text truncate">{f.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-poppins font-semibold text-brand-text truncate group-hover:text-brand-gold-dark transition-colors">{f.name}</p>
+                  <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-brand-bg text-brand-text/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Editar
+                  </span>
+                </div>
                 <p className="text-xs text-brand-text/50 truncate">{f.email}</p>
               </div>
               <Badge label={f.ativo ? "Ativa" : "Inativa"} variant={f.ativo ? "mint" : "gray"} />
-              <button
-                onClick={() => setShowDeleteId(f.id)}
-                className="p-2 rounded-full text-brand-text/30 hover:text-red-500 hover:bg-red-50 transition-all"
-              >
-                <Trash2 size={16} strokeWidth={1.5} />
-              </button>
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => handleAbrirEdicao(f)}
+                  className="p-2 rounded-full text-brand-gold hover:text-brand-gold-dark hover:bg-brand-gold/10 transition-all"
+                  title="Editar funcionária"
+                >
+                  <Pencil size={15} strokeWidth={1.5} />
+                </button>
+                <button
+                  onClick={() => setShowDeleteId(f.id)}
+                  className="p-2 rounded-full text-brand-text/30 hover:text-red-500 hover:bg-red-50 transition-all"
+                  title="Remover funcionária"
+                >
+                  <Trash2 size={16} strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -152,6 +220,67 @@ export default function FuncionariasPage() {
           <div className="flex gap-3 mt-2 justify-end">
             <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button onClick={handleCreate} loading={saving}>Cadastrar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Editar Funcionária */}
+      <Modal open={!!editando} onClose={() => { setEditando(null); setFormErrorsEdit({}); }} title="Editar Funcionária">
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Nome completo"
+            value={formEdit.name}
+            onChange={(e) => { setFormEdit((p) => ({ ...p, name: e.target.value })); setFormErrorsEdit((p) => ({ ...p, name: undefined })); }}
+            error={formErrorsEdit.name}
+            required
+          />
+          <Input
+            label="E-mail"
+            type="email"
+            value={formEdit.email}
+            onChange={(e) => { setFormEdit((p) => ({ ...p, email: e.target.value })); setFormErrorsEdit((p) => ({ ...p, email: undefined })); }}
+            error={formErrorsEdit.email}
+            required
+          />
+          <Input
+            label="Nova senha"
+            type="password"
+            value={formEdit.senha}
+            onChange={(e) => { setFormEdit((p) => ({ ...p, senha: e.target.value })); setFormErrorsEdit((p) => ({ ...p, senha: undefined })); }}
+            error={formErrorsEdit.senha}
+            hint="Deixe em branco para manter a senha atual"
+            placeholder="Nova senha (opcional)"
+          />
+          <div>
+            <label className="text-sm font-medium font-poppins text-brand-text/80 block mb-1.5">Status</label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setFormEdit((p) => ({ ...p, ativo: true }))}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold font-poppins transition-colors ${
+                  formEdit.ativo
+                    ? "bg-emerald-500 text-white"
+                    : "bg-gray-100 text-brand-text/60 hover:bg-gray-200"
+                }`}
+              >
+                Ativa
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormEdit((p) => ({ ...p, ativo: false }))}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold font-poppins transition-colors ${
+                  !formEdit.ativo
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-100 text-brand-text/60 hover:bg-gray-200"
+                }`}
+              >
+                Inativa
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-2 justify-end">
+            <Button variant="outline" onClick={() => setEditando(null)}>Cancelar</Button>
+            <Button onClick={handleAtualizar} loading={savingEdit}>Salvar Alterações</Button>
           </div>
         </div>
       </Modal>

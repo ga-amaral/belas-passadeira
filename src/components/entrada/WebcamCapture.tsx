@@ -60,12 +60,15 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
         if (videoRef.current) {
           const video = videoRef.current;
           video.srcObject = stream;
+          video.muted = true;
+          video.playsInline = true;
           video.onloadedmetadata = () => {
             video.play().catch((err) => {
               console.warn("[WebcamCapture] Erro ao reproduzir vídeo:", err);
             });
             setReady(true);
           };
+          video.play().then(() => setReady(true)).catch(() => {});
         } else {
           setReady(true);
         }
@@ -95,6 +98,18 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     setTentando(false);
   }, [pararStream]);
 
+  // Garante que o stream seja anexado ao elemento de vídeo sempre que ambos existirem
+  useEffect(() => {
+    if (videoRef.current && streamRef.current && videoRef.current.srcObject !== streamRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.muted = true;
+      video.playsInline = true;
+      video.play().catch((e) => console.warn("[WebcamCapture] play error:", e));
+      setReady(true);
+    }
+  });
+
   useEffect(() => {
     startCamera();
     return () => pararStream();
@@ -106,7 +121,9 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
-    canvas.getContext("2d")?.drawImage(video, 0, 0);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob((blob) => {
       if (!blob) return;
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
@@ -137,11 +154,31 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
             padding: "3px",
           }}
         >
-          <div className="w-full h-full rounded-full bg-white p-1">
-            {error ? (
-              <div className="w-full h-full rounded-full bg-brand-bg flex flex-col items-center justify-center gap-3 p-6 text-center">
+          <div className="w-full h-full rounded-full bg-neutral-900 relative overflow-hidden flex items-center justify-center p-1">
+            {/* O vídeo fica permanentemente no DOM para nunca perder o stream */}
+            <video
+              ref={videoRef}
+              className={`w-full h-full rounded-full object-cover transition-opacity duration-300 ${
+                ready && !error ? "opacity-100" : "opacity-0"
+              }`}
+              autoPlay
+              muted
+              playsInline
+            />
+
+            {/* Spinner enquanto carrega */}
+            {tentando && !error && (
+              <div className="absolute inset-0 bg-brand-bg rounded-full flex flex-col items-center justify-center gap-2">
+                <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
+                <span className="text-[11px] font-inter text-brand-text/50">Iniciando câmera...</span>
+              </div>
+            )}
+
+            {/* Mensagem de erro */}
+            {error && (
+              <div className="absolute inset-0 bg-brand-bg rounded-full flex flex-col items-center justify-center gap-3 p-6 text-center">
                 <AlertCircle size={28} className="text-brand-rose/60" strokeWidth={1.5} />
-                <p className="text-xs text-brand-text/50 font-inter leading-relaxed">{error}</p>
+                <p className="text-xs text-brand-text/70 font-inter leading-relaxed">{error}</p>
                 <button
                   onClick={startCamera}
                   className="flex items-center gap-1.5 text-xs text-brand-gold hover:text-brand-gold-dark font-poppins font-medium transition-colors"
@@ -150,18 +187,6 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
                   Tentar novamente
                 </button>
               </div>
-            ) : tentando ? (
-              <div className="w-full h-full rounded-full bg-brand-bg flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
-              </div>
-            ) : (
-              <video
-                ref={videoRef}
-                className="w-full h-full rounded-full object-cover"
-                autoPlay
-                muted
-                playsInline
-              />
             )}
           </div>
         </div>

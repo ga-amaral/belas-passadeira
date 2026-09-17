@@ -62,7 +62,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await authenticate(req);
   if ("error" in auth) return NextResponse.json({ message: auth.error }, { status: auth.status });
-
+  const admin = requireAdmin(auth.user);
+  if (admin) return NextResponse.json({ message: admin.error }, { status: admin.status });
 
   const db = getDb();
   const { data: orders } = await db.from("orders").select("id").eq("client_id", params.id);

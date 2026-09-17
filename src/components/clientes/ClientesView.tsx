@@ -361,13 +361,15 @@ export default function ClientesView() {
                   <Clock size={15} strokeWidth={1.5} />
                   Histórico
                 </button>
-                <button
-                  onClick={() => setConfirmDelete(c)}
-                  className="p-1.5 rounded-lg text-brand-text/30 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  title="Remover cliente"
-                >
-                  <Trash2 size={15} strokeWidth={1.5} />
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setConfirmDelete(c)}
+                    className="p-1.5 rounded-lg text-brand-text/30 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Remover cliente"
+                  >
+                    <Trash2 size={15} strokeWidth={1.5} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -538,18 +540,20 @@ export default function ClientesView() {
             hint="Separe as preferências por vírgula"
           />
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-brand-gold/10">
-            <button
-              type="button"
-              onClick={() => {
-                const c = clienteEditando;
-                setClienteEditando(null);
-                setConfirmDelete(c);
-              }}
-              className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-poppins font-medium transition-colors px-2 py-1.5 rounded-lg hover:bg-red-50"
-            >
-              <Trash2 size={14} />
-              Excluir cliente
-            </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const c = clienteEditando;
+                  setClienteEditando(null);
+                  setConfirmDelete(c);
+                }}
+                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-poppins font-medium transition-colors px-2 py-1.5 rounded-lg hover:bg-red-50"
+              >
+                <Trash2 size={14} />
+                Excluir cliente
+              </button>
+            ) : <div />}
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setClienteEditando(null)}>Cancelar</Button>
               <Button onClick={handleAtualizar} loading={savingEdit}>Salvar Alterações</Button>

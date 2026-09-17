@@ -111,7 +111,7 @@ router.put("/:id", async (req, res) => {
   return res.json(mapCliente(data));
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res) => {
   const db = getClient();
   const clientId = req.params.id;
 

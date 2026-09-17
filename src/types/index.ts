@@ -116,6 +116,46 @@ export interface HistoricoCliente {
   };
 }
 
+export interface DashboardDailyRevenue {
+  date: string; // Ex: "17/09"
+  fullDate: string; // Ex: "2026-09-17"
+  diaSemana: string; // Ex: "Qui"
+  total: number;
+  pedidos: number;
+}
+
+export interface DashboardTopCliente {
+  id: string | number;
+  nome: string;
+  whatsapp: string;
+  pedidos: number;
+  total: number;
+}
+
+export interface DashboardFuncionariaPerf {
+  id: string | number;
+  nome: string;
+  pedidos: number;
+  total: number;
+  ticketMedio: number;
+  percentual: number;
+}
+
+export interface DashboardPedidoRecente {
+  id: string | number;
+  clienteId?: string | number;
+  clienteNome: string;
+  clienteWhatsapp: string;
+  funcionariaNome: string;
+  totalGeral: number;
+  status: string;
+  volumesQtd: number;
+  volumesDesc: string[];
+  avulsosQtd: number;
+  createdAt: string;
+  pdfUrl?: string | null;
+}
+
 export interface DashboardResumo {
   pedidosHoje: number;
   pedidosSemana: number;
@@ -123,4 +163,32 @@ export interface DashboardResumo {
   totalHoje: number;
   totalSemana: number;
   totalMes: number;
+
+  // Métricas financeiras calculadas
+  ticketMedioHoje?: number;
+  ticketMedioSemana?: number;
+  ticketMedioMes?: number;
+  ticketMedioGeral?: number;
+  
+  pedidosOntem?: number;
+  totalOntem?: number;
+  variacaoHojeOntem?: number; // percentual de variação
+
+  pedidosMesAnterior?: number;
+  totalMesAnterior?: number;
+  variacaoMesAnterior?: number;
+
+  totalClientesAtivos?: number;
+  totalPecasProcessadas?: number;
+
+  receitaVolumes?: number;
+  receitaAvulsos?: number;
+  qtdVolumes?: number;
+  qtdAvulsos?: number;
+
+  graficoFaturamento?: DashboardDailyRevenue[];
+  topFuncionarias?: DashboardFuncionariaPerf[];
+  topClientes?: DashboardTopCliente[];
+  pedidosRecentes?: DashboardPedidoRecente[];
 }
+

@@ -108,7 +108,7 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       video.play().catch((e) => console.warn("[WebcamCapture] play error:", e));
       setReady(true);
     }
-  });
+  }, [tentando]);
 
   useEffect(() => {
     startCamera();

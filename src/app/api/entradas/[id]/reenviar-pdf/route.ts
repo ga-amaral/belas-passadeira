@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db.server";
-import { authenticate } from "@/lib/server/auth.server";
+import { authenticate, requireAdmin } from "@/lib/server/auth.server";
 import { gerarPdf } from "@/lib/server/pdf.server";
 import { enviarPdf } from "@/lib/server/whatsapp.server";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await authenticate(req);
   if ("error" in auth) return NextResponse.json({ message: auth.error }, { status: auth.status });
+  const admin = requireAdmin(auth.user);
+  if (admin) return NextResponse.json({ message: admin.error }, { status: admin.status });
 
   const db = getDb();
   const { data: order, error } = await db.from("orders")

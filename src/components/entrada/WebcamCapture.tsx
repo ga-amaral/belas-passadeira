@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Camera, Upload, AlertCircle, RefreshCw } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { canAutoCapture, toCaptureIntervalMs } from "@/lib/capture-scheduler";
 
 interface Props {
   onCapture: (blob: Blob, dataUrl: string) => void;
@@ -17,6 +18,9 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tentando, setTentando] = useState(false);
+  const [capturaAutomatica, setCapturaAutomatica] = useState(false);
+  const [intervaloSegundos, setIntervaloSegundos] = useState(5);
+  const [proximaCaptura, setProximaCaptura] = useState<number | null>(null);
 
   const pararStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -115,8 +119,8 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     return () => pararStream();
   }, [startCamera, pararStream]);
 
-  function capturar() {
-    if (!videoRef.current || !canvasRef.current || !ready) return;
+  const capturar = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current || !ready || disabled) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth || 640;
@@ -129,7 +133,28 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       onCapture(blob, dataUrl);
     }, "image/jpeg", 0.85);
-  }
+  }, [disabled, onCapture, ready]);
+
+  useEffect(() => {
+    if (!canAutoCapture({ automatic: capturaAutomatica, ready, processing: !!disabled })) {
+      setProximaCaptura(null);
+      return;
+    }
+
+    const intervalo = toCaptureIntervalMs(intervaloSegundos);
+    const fim = Date.now() + intervalo;
+    setProximaCaptura(Math.ceil(intervalo / 1000));
+
+    const contador = window.setInterval(() => {
+      setProximaCaptura(Math.max(0, Math.ceil((fim - Date.now()) / 1000)));
+    }, 250);
+    const agendamento = window.setTimeout(capturar, intervalo);
+
+    return () => {
+      window.clearInterval(contador);
+      window.clearTimeout(agendamento);
+    };
+  }, [capturaAutomatica, capturar, disabled, intervaloSegundos, ready]);
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -230,6 +255,41 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
           onChange={handleFileUpload}
         />
       </div>
+
+      {!error && (
+        <div className="w-full max-w-sm rounded-xl border border-brand-gold/15 bg-brand-bg px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm font-poppins text-brand-text cursor-pointer">
+              <input
+                type="checkbox"
+                checked={capturaAutomatica}
+                onChange={(event) => setCapturaAutomatica(event.target.checked)}
+                disabled={!ready || disabled}
+                className="accent-brand-gold"
+              />
+              Captura automática
+            </label>
+            <label className="flex items-center gap-1 text-xs text-brand-text/60">
+              A cada
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={intervaloSegundos}
+                onChange={(event) => setIntervaloSegundos(Math.min(60, Math.max(1, Number(event.target.value) || 1)))}
+                disabled={!capturaAutomatica || disabled}
+                className="w-12 rounded-md border border-brand-gold/20 bg-white px-1 py-0.5 text-center text-sm text-brand-text disabled:opacity-50"
+              />
+              segundos
+            </label>
+          </div>
+          {capturaAutomatica && proximaCaptura !== null && (
+            <p className="mt-2 text-center text-xs text-brand-text/55">
+              Próxima captura em {proximaCaptura}s
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

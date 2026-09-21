@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
   return res.json(data.map(mapCliente));
 });
 
-router.get("/:id/historico", async (req, res) => {
+router.get("/:id/historico", requireAdmin, async (req, res) => {
   const { data: pedidos } = await getClient()
     .from("orders")
     .select("id, created_at, total_amount, pdf_path, users:employee_id(name)")

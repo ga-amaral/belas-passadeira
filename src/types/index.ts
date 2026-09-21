@@ -60,6 +60,19 @@ export interface VolumeQuantidade {
   quantidade: number;
 }
 
+export interface OpcaoPreco {
+  id: string;
+  nome: string;
+  volume?: string;
+  tipo: "volume" | "avulso";
+}
+
+export interface VolumeSelecionado {
+  precoId: string;
+  nome: string;
+  quantidade: number;
+}
+
 export interface EntradaPayload {
   clienteId: string;
   pecas: {
@@ -67,10 +80,8 @@ export interface EntradaPayload {
     tamanho?: string;
     foto: Blob;
   }[];
-  volumes: VolumeQuantidade[];
+  volumes: VolumeSelecionado[];
   avulsos: number;
-  totalAvulso: number;
-  totalGeral: number;
   funcionariaId?: string;
 }
 
@@ -191,4 +202,3 @@ export interface DashboardResumo {
   topClientes?: DashboardTopCliente[];
   pedidosRecentes?: DashboardPedidoRecente[];
 }
-

@@ -9,6 +9,8 @@ function mapPreco(r: Record<string, unknown>) {
 export async function GET(req: NextRequest) {
   const auth = await authenticate(req);
   if ("error" in auth) return NextResponse.json({ message: auth.error }, { status: auth.status });
+  const admin = requireAdmin(auth.user);
+  if (admin) return NextResponse.json({ message: admin.error }, { status: admin.status });
 
   const { data, error } = await getDb().from("prices").select("*").eq("active", true).order("sort_order");
   if (error) return NextResponse.json({ message: error.message }, { status: 500 });

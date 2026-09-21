@@ -8,13 +8,14 @@ const { identificarPeca } = require("../services/openai");
 const { gerarPdf } = require("../services/pdf");
 const { enviarPdf } = require("../services/whatsapp");
 const { uploadItemPhoto } = require("../services/storage");
+const { calculateOrderPricing } = require("../services/pricing");
 
 const router = express.Router();
 router.use(authenticate);
 
 // POST /entrada
 router.post("/", upload.any(), async (req, res) => {
-  const { clienteId, volumes, avulsos, totalGeral } = req.body;
+  const { clienteId, volumes, avulsos } = req.body;
   if (!clienteId) return res.status(400).json({ message: "clienteId é obrigatório." });
 
   const { data: client, error: clientErr } = await getClient()
@@ -27,16 +28,24 @@ router.post("/", upload.any(), async (req, res) => {
   let volumesData = [];
   try { volumesData = typeof volumes === "string" ? JSON.parse(volumes) : (volumes || []); } catch { /**/ }
 
-  const total = parseFloat(totalGeral) || 0;
-  const avulsosQtd = parseInt(avulsos) || 0;
+  const { data: prices, error: pricesErr } = await getClient()
+    .from("prices").select("id, name, price, type").eq("active", true);
+  if (pricesErr) return res.status(500).json({ message: pricesErr.message });
+
+  let pricing;
+  try {
+    pricing = calculateOrderPricing(prices || [], volumesData, avulsos);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
 
   // Cria o pedido
   const { data: order, error: orderErr } = await getClient()
     .from("orders")
     .insert({
       client_id: clienteId, employee_id: employee.id,
-      total_amount: total, volumes_json: JSON.stringify(volumesData),
-      avulsos: avulsosQtd, status: "recebido",
+      total_amount: pricing.total, volumes_json: JSON.stringify(pricing.volumes),
+      avulsos: Number(avulsos), status: "recebido",
     })
     .select("*")
     .single();
@@ -69,7 +78,8 @@ router.post("/", upload.any(), async (req, res) => {
   let pdfPath = null;
   let whatsappSent = false;
   try {
-    const { filePath } = await gerarPdf({ order, client, items: items || [], employee });
+    const pdfOrder = { ...order, volumes_json: JSON.stringify(pricing.pdfVolumes) };
+    const { filePath } = await gerarPdf({ order: pdfOrder, client, items: items || [], employee });
     pdfPath = filePath;
     await getClient().from("orders").update({ pdf_path: path.basename(filePath) }).eq("id", orderId);
     whatsappSent = await enviarPdf(client.whatsapp, filePath, client.name);
@@ -112,7 +122,7 @@ router.get("/", requireAdmin, async (req, res) => {
 });
 
 // GET /entradas/:id
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireAdmin, async (req, res) => {
   const { data: order, error } = await getClient()
     .from("orders")
     .select("*, clients:client_id(name, whatsapp), users:employee_id(name)")
@@ -133,7 +143,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // GET /entradas/:id/pdf
-router.get("/:id/pdf", async (req, res) => {
+router.get("/:id/pdf", requireAdmin, async (req, res) => {
   const { data: order } = await getClient().from("orders").select("pdf_path").eq("id", req.params.id).single();
   if (!order?.pdf_path) return res.status(404).json({ message: "PDF não encontrado." });
 
@@ -146,7 +156,7 @@ router.get("/:id/pdf", async (req, res) => {
 });
 
 // POST /entradas/:id/reenviar-pdf
-router.post("/:id/reenviar-pdf", async (req, res) => {
+router.post("/:id/reenviar-pdf", requireAdmin, async (req, res) => {
   const { data: order, error } = await getClient()
     .from("orders")
     .select("*, clients:client_id(name, whatsapp), users:employee_id(name)")

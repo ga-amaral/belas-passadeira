@@ -1,4 +1,4 @@
-import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, DashboardResumo } from "@/types";
+import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo } from "@/types";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -72,8 +72,6 @@ export async function createEntrada(payload: EntradaPayload): Promise<{ id: stri
   const formData = new FormData();
   formData.append("clienteId", payload.clienteId);
   formData.append("avulsos", String(payload.avulsos));
-  formData.append("totalAvulso", String(payload.totalAvulso));
-  formData.append("totalGeral", String(payload.totalGeral));
   formData.append("volumes", JSON.stringify(payload.volumes));
   payload.pecas.forEach((peca, i) => {
     formData.append(`pecas[${i}][descricao]`, peca.descricao);
@@ -106,6 +104,9 @@ export async function reenviarPdf(id: string): Promise<void> {
 // Preços
 export async function getPrecos(): Promise<Preco[]> {
   return request<Preco[]>("/precos");
+}
+export async function getOpcoesPreco(): Promise<OpcaoPreco[]> {
+  return request<OpcaoPreco[]>("/precos/opcoes");
 }
 export async function updatePrecos(precos: Preco[]): Promise<Preco[]> {
   return request<Preco[]>("/precos", { method: "PUT", body: JSON.stringify({ precos }) });

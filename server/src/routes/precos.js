@@ -5,7 +5,13 @@ const { authenticate, requireAdmin } = require("../middleware/auth");
 const router = express.Router();
 router.use(authenticate);
 
-router.get("/", async (_req, res) => {
+router.get("/opcoes", async (_req, res) => {
+  const { data, error } = await getClient().from("prices").select("id, name, volume, type").eq("active", true).order("sort_order");
+  if (error) return res.status(500).json({ message: error.message });
+  return res.json(data.map((price) => ({ id: String(price.id), nome: price.name, volume: price.volume || undefined, tipo: price.type })));
+});
+
+router.get("/", requireAdmin, async (_req, res) => {
   const { data, error } = await getClient().from("prices").select("*").eq("active", true).order("sort_order");
   if (error) return res.status(500).json({ message: error.message });
   return res.json(data.map(mapPreco));

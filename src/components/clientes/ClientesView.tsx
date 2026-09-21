@@ -353,6 +353,7 @@ export default function ClientesView() {
                   <Pencil size={14} strokeWidth={1.5} />
                   Editar
                 </button>
+                {isAdmin && (
                 <button
                   onClick={() => handleVerHistorico(c)}
                   disabled={loadingHistorico}
@@ -361,6 +362,7 @@ export default function ClientesView() {
                   <Clock size={15} strokeWidth={1.5} />
                   Histórico
                 </button>
+                )}
                 {isAdmin && (
                   <button
                     onClick={() => setConfirmDelete(c)}

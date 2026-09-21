@@ -5,6 +5,7 @@ import { uploadFile } from "@/lib/server/storage.server";
 import { identificarPeca } from "@/lib/server/openai.server";
 import { gerarPdf } from "@/lib/server/pdf.server";
 import { enviarPdf } from "@/lib/server/whatsapp.server";
+import { calculateOrderPricing } from "@/lib/server/pricing.server";
 
 export async function POST(req: NextRequest) {
   const auth = await authenticate(req);
@@ -21,15 +22,24 @@ export async function POST(req: NextRequest) {
   if (clientErr || !client) return NextResponse.json({ message: "Cliente não encontrado." }, { status: 404 });
 
   const employee = auth.user;
-  const total = parseFloat(formData.get("totalGeral") as string) || 0;
-  const avulsosQtd = parseInt(formData.get("avulsos") as string) || 0;
   let volumesData: unknown[] = [];
   try { volumesData = JSON.parse(formData.get("volumes") as string || "[]"); } catch { /**/ }
 
+  const { data: prices, error: pricesErr } = await db
+    .from("prices").select("id, name, price, type").eq("active", true);
+  if (pricesErr) return NextResponse.json({ message: pricesErr.message }, { status: 500 });
+
+  let pricing;
+  try {
+    pricing = calculateOrderPricing(prices || [], volumesData as { precoId: string; quantidade: number }[], Number(formData.get("avulsos")));
+  } catch (err) {
+    return NextResponse.json({ message: err instanceof Error ? err.message : "Dados de precificação inválidos." }, { status: 400 });
+  }
+
   const { data: order, error: orderErr } = await db.from("orders").insert({
     client_id: clienteId, employee_id: employee.id,
-    total_amount: total, volumes_json: JSON.stringify(volumesData),
-    avulsos: avulsosQtd, status: "recebido",
+    total_amount: pricing.total, volumes_json: JSON.stringify(pricing.volumes),
+    avulsos: Number(formData.get("avulsos")), status: "recebido",
   }).select("*").single();
   if (orderErr) return NextResponse.json({ message: orderErr.message }, { status: 500 });
 
@@ -68,7 +78,8 @@ export async function POST(req: NextRequest) {
   let pdfPublicUrl: string | null = null;
   let whatsappSent = false;
   try {
-    const { publicUrl, filename } = await gerarPdf({ order, client, items: items || [], employee });
+    const pdfOrder = { ...order, volumes_json: JSON.stringify(pricing.pdfVolumes) };
+    const { publicUrl, filename } = await gerarPdf({ order: pdfOrder, client, items: items || [], employee });
     pdfPublicUrl = publicUrl;
     await db.from("orders").update({ pdf_path: publicUrl }).eq("id", orderId);
     whatsappSent = await enviarPdf(String(client.whatsapp), publicUrl, String(client.name));

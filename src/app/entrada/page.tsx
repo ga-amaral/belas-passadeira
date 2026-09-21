@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { Cliente, PecaItem, VolumeQuantidade } from "@/types";
+import { Cliente, PecaItem, VolumeSelecionado } from "@/types";
 import Step1Cliente from "@/components/entrada/Step1Cliente";
 import Step2Pecas from "@/components/entrada/Step2Pecas";
 import Step3Precificacao from "@/components/entrada/Step3Precificacao";
@@ -34,7 +34,7 @@ export default function EntradaPage() {
     setEnvioPdfFalhou(false);
   }
 
-  async function handleConfirmar(volumes: VolumeQuantidade[], avulsos: number, total: number) {
+  async function handleConfirmar(volumes: VolumeSelecionado[], avulsos: number) {
     if (!cliente) return;
     setConfirmando(true);
     try {
@@ -49,8 +49,6 @@ export default function EntradaPage() {
         pecas: pecasPayload,
         volumes,
         avulsos,
-        totalAvulso: avulsos * (total - volumes.reduce((a, v) => a + v.quantidade * v.preco, 0)),
-        totalGeral: total,
       }).catch(async () => {
         await delay(1000);
         return { id: String(Date.now()), success: true };

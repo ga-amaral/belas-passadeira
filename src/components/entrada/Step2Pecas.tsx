@@ -89,13 +89,15 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
         {/* Câmera */}
         <div className="bg-white rounded-2xl p-6 shadow-card border border-brand-gold/8 flex flex-col items-center gap-4">
           <h3 className="font-poppins font-semibold text-brand-text self-start">Captura de Peças</h3>
-          {processando ? (
-            <div className="flex flex-col items-center justify-center h-72">
-              <Spinner />
-            </div>
-          ) : (
+          <div className="relative w-full flex justify-center">
             <WebcamCapture onCapture={handleCaptura} disabled={processando} />
-          )}
+            {processando && (
+              <div className="absolute inset-0 z-10 rounded-xl bg-white/85 flex flex-col items-center justify-center gap-3">
+                <Spinner />
+                <p className="text-sm font-inter text-brand-text/60">Identificando peça...</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Lista */}

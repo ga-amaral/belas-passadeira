@@ -57,16 +57,7 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       return;
     }
 
-    // 3. Verifica se há mais de uma câmera disponível (para exibir botão de troca)
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const cameras = devices.filter((d) => d.kind === "videoinput");
-      setMultiplasCameras(cameras.length > 1);
-    } catch {
-      // enumerateDevices pode falhar antes da permissão ser concedida; ignora
-    }
-
-    // 4. Tenta constraints progressivamente mais permissivos, priorizando o facingMode atual
+    // 3. Tenta constraints progressivamente mais permissivos, priorizando o facingMode atual
     const outroFacingMode = facingMode === "environment" ? "user" : "environment";
     const tentativas: MediaStreamConstraints[] = [
       { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: { ideal: facingMode } } },
@@ -81,6 +72,15 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraint);
         streamRef.current = stream;
+
+        // Só depois da permissão concedida o navegador revela a lista completa de câmeras
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const cameras = devices.filter((d) => d.kind === "videoinput");
+          setMultiplasCameras(cameras.length > 1);
+        } catch {
+          // Segue sem o botão de troca caso a enumeração falhe
+        }
 
         const [track] = stream.getVideoTracks();
         const capabilities = track?.getCapabilities?.() as (MediaTrackCapabilities & { zoom?: ZoomCapability }) | undefined;

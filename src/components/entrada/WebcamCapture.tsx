@@ -1,13 +1,19 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Camera, Upload, AlertCircle, RefreshCw } from "lucide-react";
+import { Camera, Upload, AlertCircle, RefreshCw, SwitchCamera, ZoomIn } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { canAutoCapture, toCaptureIntervalMs } from "@/lib/capture-scheduler";
 
 interface Props {
   onCapture: (blob: Blob, dataUrl: string) => void;
   disabled?: boolean;
+}
+
+interface ZoomCapability {
+  min: number;
+  max: number;
+  step: number;
 }
 
 export default function WebcamCapture({ onCapture, disabled }: Props) {
@@ -21,6 +27,10 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
   const [capturaAutomatica, setCapturaAutomatica] = useState(false);
   const [intervaloSegundos, setIntervaloSegundos] = useState(5);
   const [proximaCaptura, setProximaCaptura] = useState<number | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [multiplasCameras, setMultiplasCameras] = useState(false);
+  const [zoomCapability, setZoomCapability] = useState<ZoomCapability | null>(null);
+  const [zoom, setZoom] = useState<number | null>(null);
 
   const pararStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -47,11 +57,21 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       return;
     }
 
-    // 3. Tenta constraints progressivamente mais permissivos (usando 'ideal' para não falhar em webcam desktop)
+    // 3. Verifica se há mais de uma câmera disponível (para exibir botão de troca)
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter((d) => d.kind === "videoinput");
+      setMultiplasCameras(cameras.length > 1);
+    } catch {
+      // enumerateDevices pode falhar antes da permissão ser concedida; ignora
+    }
+
+    // 4. Tenta constraints progressivamente mais permissivos, priorizando o facingMode atual
+    const outroFacingMode = facingMode === "environment" ? "user" : "environment";
     const tentativas: MediaStreamConstraints[] = [
-      { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
-      { video: { facingMode: { ideal: "environment" } } },
-      { video: { facingMode: { ideal: "user" } } },
+      { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: { ideal: facingMode } } },
+      { video: { facingMode: { ideal: facingMode } } },
+      { video: { facingMode: { ideal: outroFacingMode } } },
       { video: true },
     ];
 
@@ -61,6 +81,18 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraint);
         streamRef.current = stream;
+
+        const [track] = stream.getVideoTracks();
+        const capabilities = track?.getCapabilities?.() as (MediaTrackCapabilities & { zoom?: ZoomCapability }) | undefined;
+        if (capabilities?.zoom && capabilities.zoom.max > capabilities.zoom.min) {
+          setZoomCapability(capabilities.zoom);
+          const settings = track.getSettings?.() as (MediaTrackSettings & { zoom?: number }) | undefined;
+          setZoom(settings?.zoom ?? capabilities.zoom.min);
+        } else {
+          setZoomCapability(null);
+          setZoom(null);
+        }
+
         if (videoRef.current) {
           const video = videoRef.current;
           video.srcObject = stream;
@@ -100,7 +132,19 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
       setError("Câmera não disponível ou permissão negada. Use o botão abaixo para enviar uma foto.");
     }
     setTentando(false);
-  }, [pararStream]);
+  }, [facingMode, pararStream]);
+
+  const alternarCamera = useCallback(() => {
+    setFacingMode((atual) => (atual === "environment" ? "user" : "environment"));
+  }, []);
+
+  const alterarZoom = useCallback((valor: number) => {
+    setZoom(valor);
+    const track = streamRef.current?.getVideoTracks()[0];
+    track?.applyConstraints({ advanced: [{ zoom: valor } as MediaTrackConstraintSet] }).catch((err) => {
+      console.warn("[WebcamCapture] Erro ao aplicar zoom:", err);
+    });
+  }, []);
 
   // Garante que o stream seja anexado ao elemento de vídeo sempre que ambos existirem
   useEffect(() => {
@@ -226,9 +270,38 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
             <path d="M4 13v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
           </svg>
         </div>
+
+        {/* Botão de troca de câmera (frontal/traseira) */}
+        {!error && multiplasCameras && (
+          <button
+            onClick={alternarCamera}
+            disabled={disabled || tentando}
+            title="Trocar câmera"
+            className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white shadow-gold flex items-center justify-center disabled:opacity-50"
+            style={{ border: "1.5px solid rgba(212,175,55,0.3)" }}
+          >
+            <SwitchCamera size={18} className="text-brand-gold" strokeWidth={1.5} />
+          </button>
+        )}
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
+
+      {!error && zoomCapability && zoom !== null && (
+        <div className="flex items-center gap-2 w-full max-w-sm">
+          <ZoomIn size={16} className="text-brand-text/50 shrink-0" strokeWidth={1.5} />
+          <input
+            type="range"
+            min={zoomCapability.min}
+            max={zoomCapability.max}
+            step={zoomCapability.step}
+            value={zoom}
+            onChange={(e) => alterarZoom(Number(e.target.value))}
+            disabled={disabled}
+            className="w-full accent-brand-gold"
+          />
+        </div>
+      )}
 
       <div className="flex gap-3 flex-wrap justify-center">
         {!error && (

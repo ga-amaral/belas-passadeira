@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
     if (!file) continue;
     const descricaoManual = formData.get(`pecas[${i}][descricao]`) as string | null;
     const tamanhoManual = formData.get(`pecas[${i}][tamanho]`) as string | null;
+    const quantidadeRaw = Number(formData.get(`pecas[${i}][quantidade]`));
+    const quantidade = Number.isInteger(quantidadeRaw) ? Math.min(999, Math.max(1, quantidadeRaw)) : 1;
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const [aiResult, imageUrl] = await Promise.all([
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     await db.from("order_items").insert({
       order_id: orderId, image_path: file.name, image_url: imageUrl,
-      ai_description: aiResult.descricao, manual_description: descricaoManual,
+      ai_description: aiResult.descricao, manual_description: descricaoManual, quantity: quantidade,
       item_type: aiResult.tipo, size: tamanhoManual || aiResult.tamanhoSugerido || null,
     });
   }

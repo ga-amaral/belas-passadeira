@@ -51,6 +51,7 @@ export interface PecaItem {
   descricao: string;
   tamanho?: string;
   tipo?: "lencol" | "toalha" | "outro";
+  quantidade: number;
 }
 
 export interface VolumeQuantidade {
@@ -78,6 +79,7 @@ export interface EntradaPayload {
   pecas: {
     descricao: string;
     tamanho?: string;
+    quantidade: number;
     foto: Blob;
   }[];
   volumes: VolumeSelecionado[];
@@ -97,6 +99,7 @@ export interface Entrada {
   pecas: {
     descricao: string;
     tamanho?: string;
+    quantidade?: number;
     fotoUrl?: string;
   }[];
   volumes: VolumeQuantidade[];
@@ -107,6 +110,7 @@ export interface Entrada {
 export interface HistoricoPeca {
   descricao: string;
   tamanho?: string | null;
+  quantidade?: number;
   fotoUrl?: string | null;
 }
 

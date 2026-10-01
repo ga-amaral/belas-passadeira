@@ -80,6 +80,7 @@ function PecasFotos({ pecas }: { pecas: HistoricoPedido["pecas"] }) {
 function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
   const [expanded, setExpanded] = useState(false);
   const temFotos = pedido.pecas.some((p) => p.fotoUrl);
+  const totalPecas = pedido.pecas.reduce((t, p) => t + (p.quantidade ?? 1), 0);
 
   return (
     <div className="rounded-xl bg-brand-bg border border-brand-gold/8 overflow-hidden">
@@ -89,7 +90,7 @@ function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
           {pedido.funcionaria && <p className="text-xs text-brand-text/40">{pedido.funcionaria}</p>}
           {pedido.pecas.length > 0 && (
             <p className="text-xs text-brand-text/50 mt-0.5">
-              {pedido.pecas.length} peça{pedido.pecas.length !== 1 ? "s" : ""}
+              {totalPecas} peça{totalPecas !== 1 ? "s" : ""}
             </p>
           )}
         </div>
@@ -125,7 +126,7 @@ function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
             <div className="flex flex-col gap-1 mt-2">
               {pedido.pecas.map((p, i) => (
                 <p key={i} className="text-xs text-brand-text/60">
-                  {p.descricao}{p.tamanho ? ` – ${p.tamanho}` : ""}
+                  {p.descricao}{p.tamanho ? ` – ${p.tamanho}` : ""}{(p.quantidade ?? 1) > 1 ? ` ×${p.quantidade}` : ""}
                 </p>
               ))}
             </div>

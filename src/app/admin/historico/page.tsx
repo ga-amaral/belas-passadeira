@@ -201,7 +201,7 @@ export default function HistoricoPage() {
                       {i + 1}
                     </div>
                     <div>
-                      <p className="text-sm font-inter text-brand-text">{peca.descricao}</p>
+                      <p className="text-sm font-inter text-brand-text">{peca.descricao}{(peca.quantidade ?? 1) > 1 ? ` ×${peca.quantidade}` : ""}</p>
                       {peca.tamanho && <p className="text-xs text-brand-text/50">Tamanho: {peca.tamanho}</p>}
                     </div>
                   </div>

@@ -85,8 +85,9 @@ export async function gerarPdf({ order, client, items, employee }: {
     checkPage();
     const desc = String(item.manual_description || item.ai_description || "Peca").replace(/[^\x00-\xFF]/g, "?");
     const size = item.size ? ` - ${item.size}` : "";
+    const qty = Number(item.quantity) > 1 ? ` x${Number(item.quantity)}` : "";
     page.drawRectangle({ x: M, y: y(cursor + 3), width: W - M * 2, height: 20, color: CREAM });
-    page.drawText(`${i + 1}. ${desc}${size}`, { x: M + 6, y: y(cursor + 3) + 5, font: regular, size: 9, color: BROWN, maxWidth: W - M * 2 - 12 });
+    page.drawText(`${i + 1}. ${desc}${size}${qty}`, { x: M + 6, y: y(cursor + 3) + 5, font: regular, size: 9, color: BROWN, maxWidth: W - M * 2 - 12 });
     cursor += 24;
   });
 

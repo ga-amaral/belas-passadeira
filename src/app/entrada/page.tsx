@@ -41,6 +41,7 @@ export default function EntradaPage() {
       const pecasPayload = pecas.map((p) => ({
         descricao: p.descricao,
         tamanho: p.tamanho,
+        quantidade: p.quantidade,
         foto: p.fotoBlob ?? new Blob([p.foto], { type: "image/jpeg" }),
       }));
 

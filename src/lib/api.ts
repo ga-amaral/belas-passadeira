@@ -76,6 +76,7 @@ export async function createEntrada(payload: EntradaPayload): Promise<{ id: stri
   payload.pecas.forEach((peca, i) => {
     formData.append(`pecas[${i}][descricao]`, peca.descricao);
     if (peca.tamanho) formData.append(`pecas[${i}][tamanho]`, peca.tamanho);
+    formData.append(`pecas[${i}][quantidade]`, String(peca.quantidade));
     formData.append(`pecas[${i}][foto]`, peca.foto, `peca_${i}.jpg`);
   });
   return request<{ id: string; success: boolean }>("/entrada", { method: "POST", body: formData });

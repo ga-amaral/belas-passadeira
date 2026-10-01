@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Trash2, Edit2, Check } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Trash2, Edit2, Check, Minus, Plus } from "lucide-react";
 import { Cliente, PecaItem } from "@/types";
 import WebcamCapture from "./WebcamCapture";
 import Spinner from "@/components/ui/Spinner";
@@ -25,6 +25,10 @@ const TAMANHOS_TOALHA = ["Rosto", "Banho", "Piso"];
 export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }: Props) {
   const [processando, setProcessando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  // Ref evita closure velha: capturas seguidas não sobrescrevem peças já adicionadas
+  const pecasRef = useRef(pecas);
+  useEffect(() => { pecasRef.current = pecas; }, [pecas]);
+  const totalPecas = pecas.reduce((t, p) => t + p.quantidade, 0);
 
   const handleCaptura = useCallback(async (blob: Blob, dataUrl: string) => {
     setProcessando(true);
@@ -45,15 +49,17 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
         descricao: resultado.descricao || "Peça de roupa",
         tipo: (["lencol", "toalha", "outro"].includes(resultado.tipo) ? resultado.tipo : "outro") as PecaItem["tipo"],
         tamanho: tamanhoDefinido,
+        quantidade: 1,
       };
-      onChange([...pecas, novaPeca]);
+      pecasRef.current = [...pecasRef.current, novaPeca];
+      onChange(pecasRef.current);
       toast.success("Peça identificada com sucesso!");
     } catch {
       toast.error("Erro ao identificar a peça. Tente novamente.");
     } finally {
       setProcessando(false);
     }
-  }, [pecas, onChange]);
+  }, [onChange]);
 
   function updatePeca(id: string, changes: Partial<PecaItem>) {
     onChange(pecas.map((p) => (p.id === id ? { ...p, ...changes } : p)));
@@ -61,6 +67,11 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
 
   function removePeca(id: string) {
     onChange(pecas.filter((p) => p.id !== id));
+  }
+
+  function setQuantidade(id: string, valor: number) {
+    const quantidade = Math.min(999, Math.max(1, Math.floor(valor) || 1));
+    updatePeca(id, { quantidade });
   }
 
   return (
@@ -80,7 +91,7 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
         <div className="flex-1" />
         <div className="bg-brand-gold/10 px-3 py-1.5 rounded-full">
           <span className="text-sm font-poppins font-semibold text-brand-gold">
-            {pecas.length} {pecas.length === 1 ? "peça" : "peças"}
+            {totalPecas} {totalPecas === 1 ? "peça" : "peças"}
           </span>
         </div>
       </div>
@@ -160,6 +171,37 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
                         ))}
                       </select>
                     )}
+
+                    {/* Quantidade */}
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <span className="text-xs text-brand-text/50 mr-1">Qtd</span>
+                      <button
+                        onClick={() => setQuantidade(peca.id, peca.quantidade - 1)}
+                        disabled={peca.quantidade <= 1}
+                        aria-label="Diminuir quantidade"
+                        className="w-6 h-6 rounded-md border border-brand-gold/25 bg-white flex items-center justify-center text-brand-text disabled:opacity-40"
+                      >
+                        <Minus size={12} strokeWidth={2} />
+                      </button>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={999}
+                        value={peca.quantidade}
+                        onChange={(e) => setQuantidade(peca.id, Number(e.target.value))}
+                        aria-label="Quantidade"
+                        className="w-12 h-6 text-center text-sm bg-white border border-brand-gold/25 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-gold/40"
+                      />
+                      <button
+                        onClick={() => setQuantidade(peca.id, peca.quantidade + 1)}
+                        disabled={peca.quantidade >= 999}
+                        aria-label="Aumentar quantidade"
+                        className="w-6 h-6 rounded-md border border-brand-gold/25 bg-white flex items-center justify-center text-brand-text disabled:opacity-40"
+                      >
+                        <Plus size={12} strokeWidth={2} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Ações */}
@@ -187,7 +229,7 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
       <div className="flex gap-3 justify-between">
         <Button variant="outline" onClick={onBack}>Voltar</Button>
         <Button onClick={onNext} disabled={pecas.length === 0}>
-          Finalizar Entrada ({pecas.length} {pecas.length === 1 ? "peça" : "peças"})
+          Finalizar Entrada ({totalPecas} {totalPecas === 1 ? "peça" : "peças"})
         </Button>
       </div>
     </div>

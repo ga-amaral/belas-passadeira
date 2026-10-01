@@ -51,7 +51,7 @@ export default function Step3Precificacao({ cliente, pecas, onConfirmar, onBack,
         </div>
         <div>
           <p className="font-poppins font-semibold text-brand-text">{cliente.nome}</p>
-          <p className="text-xs text-brand-text/50">{pecas.length} peças registradas</p>
+          <p className="text-xs text-brand-text/50">{pecas.reduce((t, p) => t + p.quantidade, 0)} peças registradas</p>
         </div>
       </div>
 

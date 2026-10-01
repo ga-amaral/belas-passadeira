@@ -28,6 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     pecas: (items || []).map((i: Record<string, unknown>) => ({
       descricao: i.manual_description || i.ai_description,
       tamanho: i.size,
+      quantidade: Number(i.quantity) || 1,
       fotoUrl: i.image_url || null,
     })),
   });

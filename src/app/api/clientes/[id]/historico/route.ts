@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const orderIds = pedidos.map((p: Record<string, unknown>) => p.id);
   const { data: allItems } = await db.from("order_items")
-    .select("order_id, ai_description, manual_description, size, image_url, image_path")
+    .select("order_id, ai_description, manual_description, size, quantity, image_url, image_path")
     .in("order_id", orderIds);
 
   const byOrder: Record<string, unknown[]> = {};
@@ -29,6 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     byOrder[String(r.order_id)].push({
       descricao: r.manual_description || r.ai_description || "Peça",
       tamanho: r.size || null,
+      quantidade: Number(r.quantity) || 1,
       fotoUrl: r.image_url || null,
     });
   }

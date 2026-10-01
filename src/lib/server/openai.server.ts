@@ -82,3 +82,32 @@ export async function identificarPeca(buffer: Buffer, mimeType: string) {
   }
 }
 
+
+const DETECT_PROMPT = `Veja a imagem de uma câmera apontada para uma mesa/bancada de lavanderia.
+Responda OBRIGATORIAMENTE um JSON: {"tem_peca": true | false}
+tem_peca = true somente se houver uma peça de roupa ou item têxtil (roupa, lençol, toalha, pano) claramente visível e posicionado para ser fotografado.
+tem_peca = false se a imagem mostrar apenas bancada vazia, parede, mãos, pessoas, objetos sem tecido ou estiver escura/borrada.`;
+
+// Verificação barata (imagem em baixa resolução) para decidir se vale iniciar a captura automática.
+// Lança erro quando não há chave/falha na API: quem chama NÃO deve tratar isso como "tem peça".
+export async function detectarPeca(buffer: Buffer, mimeType: string): Promise<boolean> {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
+
+  const { OpenAI } = await import("openai");
+  const openai = new OpenAI({ apiKey });
+  const res = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    max_tokens: 20,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: DETECT_PROMPT },
+        { type: "image_url", image_url: { url: `data:${mimeType};base64,${buffer.toString("base64")}`, detail: "low" } },
+      ],
+    }],
+  });
+  const json = JSON.parse(res.choices[0]?.message?.content?.trim() ?? "{}") as { tem_peca?: boolean };
+  return json.tem_peca === true;
+}

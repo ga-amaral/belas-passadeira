@@ -1,5 +1,5 @@
-function canAutoCapture({ automatic, ready, processing }) {
-  return automatic && ready && !processing;
+function canAutoCapture({ automatic, ready, processing, garmentPresent = true, awaitingRemoval = false }) {
+  return automatic && ready && !processing && garmentPresent && !awaitingRemoval;
 }
 
 function toCaptureIntervalMs(seconds) {

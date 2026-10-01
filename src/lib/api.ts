@@ -118,6 +118,14 @@ export async function getDashboardResumo(): Promise<DashboardResumo> {
   return request<DashboardResumo>("/dashboard/resumo");
 }
 
+// Detecta se há peça de roupa na frente da câmera (usado na captura automática)
+export async function detectarPeca(blob: Blob): Promise<boolean> {
+  const formData = new FormData();
+  formData.append("foto", blob, "frame.jpg");
+  const res = await request<{ temPeca: boolean }>("/entradas/detectar-peca", { method: "POST", body: formData });
+  return res.temPeca;
+}
+
 // Identificação de peça via IA
 export async function identificarPeca(blob: Blob): Promise<{ descricao: string; tipo: string; tamanhoSugerido: string | null }> {
   const formData = new FormData();

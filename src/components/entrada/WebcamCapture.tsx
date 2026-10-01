@@ -4,6 +4,10 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { Camera, Upload, AlertCircle, RefreshCw, SwitchCamera, ZoomIn } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { canAutoCapture, toCaptureIntervalMs } from "@/lib/capture-scheduler";
+import { detectarPeca } from "@/lib/api";
+
+const INTERVALO_DETECCAO_MS = 2000;
+const LARGURA_FRAME_DETECCAO = 384;
 
 interface Props {
   onCapture: (blob: Blob, dataUrl: string) => void;
@@ -27,6 +31,9 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
   const [capturaAutomatica, setCapturaAutomatica] = useState(false);
   const [intervaloSegundos, setIntervaloSegundos] = useState(5);
   const [proximaCaptura, setProximaCaptura] = useState<number | null>(null);
+  const [pecaPresente, setPecaPresente] = useState(false);
+  const [aguardandoRetirada, setAguardandoRetirada] = useState(false);
+  const [erroDeteccao, setErroDeteccao] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [multiplasCameras, setMultiplasCameras] = useState(false);
   const [zoomCapability, setZoomCapability] = useState<ZoomCapability | null>(null);
@@ -179,8 +186,73 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     }, "image/jpeg", 0.85);
   }, [disabled, onCapture, ready]);
 
+  // Frame pequeno só para a detecção (barato); a foto da peça continua em resolução cheia
+  const capturarFrameDeteccao = useCallback((): Promise<Blob | null> => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return Promise.resolve(null);
+    const escala = Math.min(1, LARGURA_FRAME_DETECCAO / video.videoWidth);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(video.videoWidth * escala);
+    canvas.height = Math.round(video.videoHeight * escala);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return Promise.resolve(null);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.7));
+  }, []);
+
+  // Com a captura automática ligada, a IA verifica periodicamente se há peça na frente da câmera
   useEffect(() => {
-    if (!canAutoCapture({ automatic: capturaAutomatica, ready, processing: !!disabled })) {
+    if (!capturaAutomatica || !ready || disabled) return;
+
+    let cancelado = false;
+    let timer: number | undefined;
+
+    const verificar = async () => {
+      try {
+        const frame = await capturarFrameDeteccao();
+        if (cancelado) return;
+        if (!frame) {
+          timer = window.setTimeout(verificar, INTERVALO_DETECCAO_MS);
+          return;
+        }
+        const presente = await detectarPeca(frame);
+        if (cancelado) return;
+        setErroDeteccao(false);
+        setPecaPresente(presente);
+        if (!presente) setAguardandoRetirada(false);
+      } catch (err) {
+        if (cancelado) return;
+        console.warn("[WebcamCapture] Falha ao detectar peça:", err);
+        setErroDeteccao(true);
+        setPecaPresente(false);
+      }
+      if (!cancelado) timer = window.setTimeout(verificar, INTERVALO_DETECCAO_MS);
+    };
+    verificar();
+
+    return () => {
+      cancelado = true;
+      window.clearTimeout(timer);
+    };
+  }, [capturaAutomatica, capturarFrameDeteccao, disabled, ready]);
+
+  useEffect(() => {
+    if (!capturaAutomatica) {
+      setPecaPresente(false);
+      setAguardandoRetirada(false);
+      setErroDeteccao(false);
+    }
+  }, [capturaAutomatica]);
+
+  // O tempo só corre enquanto houver peça detectada e a anterior já tiver sido retirada
+  useEffect(() => {
+    if (!canAutoCapture({
+      automatic: capturaAutomatica,
+      ready,
+      processing: !!disabled,
+      garmentPresent: pecaPresente,
+      awaitingRemoval: aguardandoRetirada,
+    })) {
       setProximaCaptura(null);
       return;
     }
@@ -192,13 +264,16 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
     const contador = window.setInterval(() => {
       setProximaCaptura(Math.max(0, Math.ceil((fim - Date.now()) / 1000)));
     }, 250);
-    const agendamento = window.setTimeout(capturar, intervalo);
+    const agendamento = window.setTimeout(() => {
+      setAguardandoRetirada(true);
+      capturar();
+    }, intervalo);
 
     return () => {
       window.clearInterval(contador);
       window.clearTimeout(agendamento);
     };
-  }, [capturaAutomatica, capturar, disabled, intervaloSegundos, ready]);
+  }, [aguardandoRetirada, capturaAutomatica, capturar, disabled, intervaloSegundos, pecaPresente, ready]);
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -356,9 +431,15 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
               segundos
             </label>
           </div>
-          {capturaAutomatica && proximaCaptura !== null && (
+          {capturaAutomatica && (
             <p className="mt-2 text-center text-xs text-brand-text/55">
-              Próxima captura em {proximaCaptura}s
+              {erroDeteccao
+                ? "Detecção de peça indisponível. Use o botão Capturar Peça."
+                : aguardandoRetirada
+                  ? "Retire a peça para registrar a próxima."
+                  : proximaCaptura !== null
+                    ? `Peça detectada. Captura em ${proximaCaptura}s`
+                    : "Aguardando uma peça na frente da câmera..."}
             </p>
           )}
         </div>

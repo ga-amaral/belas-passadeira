@@ -1,4 +1,4 @@
-import type { PedidoKanban } from "@/types";
+import type { PedidoKanban, PedidoStatus, PedidoStatusResponse } from "@/types";
 
 type PedidoRow = Record<string, unknown> & {
   order_items?: Array<Record<string, unknown>> | null;
@@ -34,4 +34,17 @@ export async function listPedidosKanban(): Promise<PedidoKanban[]> {
     .limit(200);
   if (error) throw error;
   return ((data ?? []) as PedidoRow[]).map(mapPedidoKanban);
+}
+
+export async function updatePedidoStatus(id: number, status: PedidoStatus): Promise<PedidoStatusResponse | null> {
+  const { getDb } = await import("@/lib/server/db.server");
+  const { data, error } = await getDb()
+    .from("orders")
+    .update({ status })
+    .eq("id", id)
+    .select("id, status")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { id: Number(data.id), status: data.status as PedidoStatus };
 }

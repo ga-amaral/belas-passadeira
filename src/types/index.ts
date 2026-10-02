@@ -1,5 +1,31 @@
 export type UserRole = "admin" | "funcionaria";
 
+export type PedidoStatus =
+  | "entrada"
+  | "molho_secagem"
+  | "secar"
+  | "passar"
+  | "concluido";
+
+export interface PedidoKanban {
+  id: number;
+  clienteNome: string;
+  quantidadePecas: number;
+  funcionariaNome: string;
+  totalGeral: number;
+  status: PedidoStatus;
+  createdAt: string;
+}
+
+export interface PedidoStatusResponse {
+  id: number;
+  status: PedidoStatus;
+}
+
+export interface PedidosKanbanResponse {
+  pedidos: PedidoKanban[];
+}
+
 export interface User {
   id: string;
   name: string;

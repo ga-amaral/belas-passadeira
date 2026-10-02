@@ -8,6 +8,12 @@ export function isAllowedPedidoRole(user: { role: string }): boolean {
   return user.role === "admin" || user.role === "funcionaria";
 }
 
+export function parsePedidoId(raw: string): number | null {
+  if (!/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 export function mapPedidoKanban(row: PedidoRow): PedidoKanban {
   const client = row.clients as Record<string, unknown> | null;
   const employee = row.users as Record<string, unknown> | null;

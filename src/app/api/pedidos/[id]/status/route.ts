@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { PedidoStatus } from "@/types";
 import { authenticate } from "@/lib/server/auth.server";
-import { isAllowedPedidoRole, updatePedidoStatus } from "@/lib/server/pedidos.server";
+import { isAllowedPedidoRole, parsePedidoId, updatePedidoStatus } from "@/lib/server/pedidos.server";
 import { isPedidoStatus } from "@/lib/domain/pedido-status";
-
-export function parsePedidoId(raw: string): number | null {
-  if (!/^\d+$/.test(raw)) return null;
-  const id = Number(raw);
-  return Number.isSafeInteger(id) && id > 0 ? id : null;
-}
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await authenticate(req);

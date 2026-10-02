@@ -1,22 +1,14 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 
 const routeSource = readFileSync("src/app/api/pedidos/[id]/status/route.ts", "utf8");
 
-function extractParsePedidoId(): (raw: string) => number | null {
-  const declaration = routeSource.match(
-    /export function parsePedidoId\(raw: string\): number \| null \{[\s\S]*?\n\}/,
-  );
-  assert.ok(declaration, "status route must export parsePedidoId");
-  const body = declaration[0]
-    .replace(/^export /, "")
-    .replace(/\(raw: string\): number \| null/, "(raw)");
-  return new Function(`${body}\nreturn parsePedidoId;`)() as (raw: string) => number | null;
-}
+const load = createRequire(import.meta.url);
+const { parsePedidoId } = load("../../../lib/server/pedidos.server.ts") as typeof import("../../../lib/server/pedidos.server");
 
 test("parses only positive integer order ids", () => {
-  const parsePedidoId = extractParsePedidoId();
   assert.equal(parsePedidoId("42"), 42);
   assert.equal(parsePedidoId("0"), null);
   assert.equal(parsePedidoId("-1"), null);
@@ -32,6 +24,18 @@ test("validates the numeric id before touching body or database", () => {
   assert.ok(bodyCall > -1 && updateCall > -1, "PATCH must parse the body and update the order");
   assert.ok(parseCall < bodyCall, "id validation must run before the request body is read");
   assert.ok(parseCall < updateCall, "id validation must run before any database access");
+});
+
+test("route module exports only the PATCH handler", () => {
+  const exports = routeSource
+    .split("\n")
+    .filter((line) => /^export\s/.test(line))
+    .map((line) => line.trim());
+  assert.deepEqual(
+    exports,
+    ["export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {"],
+  );
+  assert.match(routeSource, /import \{[^}]*parsePedidoId[^}]*\} from "@\/lib\/server\/pedidos\.server"/);
 });
 
 test("PATCH uses the Next 14 synchronous params contract", () => {

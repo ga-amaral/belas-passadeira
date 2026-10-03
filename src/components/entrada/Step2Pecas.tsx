@@ -10,6 +10,7 @@ import { identificarPeca as apiIdentificarPeca } from "@/lib/api";
 import { mockDescricaoIA } from "@/lib/mocks";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { newestFirst } from "./pecas-display-order";
 
 interface Props {
   cliente: Cliente;
@@ -122,7 +123,7 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
                 <p className="text-sm font-inter">Capture as peças usando a câmera</p>
               </div>
             ) : (
-              pecas.map((peca) => (
+              newestFirst(pecas).map((peca) => (
                 <div
                   key={peca.id}
                   className="flex gap-3 p-3 rounded-xl bg-brand-bg border border-brand-gold/8 group"

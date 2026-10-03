@@ -1,4 +1,4 @@
-import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo } from "@/types";
+import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo, PedidoKanban, PedidoStatus, PedidoStatusResponse, PedidosKanbanResponse } from "@/types";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -100,6 +100,19 @@ export async function getEntradaPdf(id: string): Promise<Blob> {
 
 export async function reenviarPdf(id: string): Promise<void> {
   return request<void>(`/entradas/${id}/reenviar-pdf`, { method: "POST" });
+}
+
+// Pedidos (Kanban)
+export async function getPedidosKanban(): Promise<PedidoKanban[]> {
+  const response = await request<PedidosKanbanResponse>("/pedidos");
+  return response.pedidos;
+}
+
+export async function updatePedidoStatus(id: number, status: PedidoStatus): Promise<PedidoStatusResponse> {
+  return request<PedidoStatusResponse>(`/pedidos/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
 // Preços

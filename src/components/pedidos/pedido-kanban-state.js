@@ -16,4 +16,8 @@ function groupPedidosByStatus(pedidos, statuses) {
   return grouped;
 }
 
-module.exports = { groupPedidosByStatus, mergePollingPedidos };
+function shouldApplyPollingResult(epochAtStart, currentEpoch) {
+  return epochAtStart === currentEpoch;
+}
+
+module.exports = { groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult };

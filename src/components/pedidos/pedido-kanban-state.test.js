@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const {
   groupPedidosByStatus,
   mergePollingPedidos,
+  shouldApplyPollingResult,
 } = require("./pedido-kanban-state");
 
 test("polling does not overwrite a card with a pending local move", () => {
@@ -36,4 +37,9 @@ test("groups each order under its persisted status", () => {
     passar: [{ id: 2, status: "passar" }],
     concluido: [],
   });
+});
+
+test("discards a polling response that started before a move changed the epoch", () => {
+  assert.equal(shouldApplyPollingResult(4, 5), false);
+  assert.equal(shouldApplyPollingResult(5, 5), true);
 });

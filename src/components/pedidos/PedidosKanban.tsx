@@ -5,6 +5,7 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -14,7 +15,7 @@ import { PEDIDO_STATUS_LABELS, PEDIDO_STATUSES } from "@/lib/domain/pedido-statu
 import { getPedidosKanban, updatePedidoStatus } from "@/lib/api";
 import type { PedidoKanban, PedidoStatus } from "@/types";
 import PedidoCard from "./PedidoCard";
-import { groupPedidosByStatus, mergePollingPedidos } from "./pedido-kanban-state";
+import { groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult } from "./pedido-kanban-state";
 
 const pedidoStatuses = PEDIDO_STATUSES as readonly PedidoStatus[];
 
@@ -54,15 +55,19 @@ export default function PedidosKanban() {
   const [moveError, setMoveError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const pendingIdsRef = useRef<Set<number>>(new Set());
+  const movesEpochRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor),
   );
 
   const load = useCallback(async () => {
+    const epochAtStart = movesEpochRef.current;
     try {
       const incoming = await getPedidosKanban();
+      if (!shouldApplyPollingResult(epochAtStart, movesEpochRef.current)) return;
       setPedidos((current) => mergePollingPedidos(current, incoming, pendingIdsRef.current));
       setLoadError(null);
     } catch (cause) {
@@ -86,6 +91,7 @@ export default function PedidosKanban() {
     const current = pedidos.find((pedido) => pedido.id === id);
     if (!current || current.status === status || pendingIdsRef.current.has(id)) return;
 
+    movesEpochRef.current += 1;
     const nextPending = new Set(pendingIdsRef.current).add(id);
     pendingIdsRef.current = nextPending;
     setPendingIds(nextPending);
@@ -105,6 +111,7 @@ export default function PedidosKanban() {
       )));
       setMoveError(cause instanceof Error ? cause.message : "Erro ao atualizar pedido.");
     } finally {
+      movesEpochRef.current += 1;
       const clearedPending = new Set(pendingIdsRef.current);
       clearedPending.delete(id);
       pendingIdsRef.current = clearedPending;

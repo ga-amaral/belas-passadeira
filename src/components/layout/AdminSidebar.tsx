@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
+  ClipboardList,
   Users,
   History,
   Tag,
@@ -16,6 +17,7 @@ import { clearAuth, getStoredUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/pedidos", label: "Pedidos", icon: ClipboardList },
   { href: "/admin/precos", label: "Preços", icon: Tag },
   { href: "/admin/funcionarias", label: "Funcionárias", icon: Users },
   { href: "/admin/historico", label: "Histórico", icon: History },

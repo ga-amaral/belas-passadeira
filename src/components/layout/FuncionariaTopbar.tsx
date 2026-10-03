@@ -51,6 +51,14 @@ export default function FuncionariaTopbar() {
           <Users size={14} strokeWidth={1.5} />
           Clientes
         </Link>
+        <Link
+          href="/entrada/pedidos"
+          className={`px-3 py-1.5 rounded-lg text-sm font-poppins transition-colors ${
+            pathname === "/entrada/pedidos" ? "bg-brand-gold/10 text-brand-gold font-semibold" : "text-brand-text/60 hover:text-brand-text"
+          }`}
+        >
+          Pedidos
+        </Link>
       </nav>
 
       <div className="flex items-center gap-4">

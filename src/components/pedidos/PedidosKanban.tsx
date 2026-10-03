@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -15,7 +15,7 @@ import { PEDIDO_STATUS_LABELS, PEDIDO_STATUSES } from "@/lib/domain/pedido-statu
 import { getPedidosKanban, updatePedidoStatus } from "@/lib/api";
 import type { PedidoKanban, PedidoStatus } from "@/types";
 import PedidoCard from "./PedidoCard";
-import { groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult } from "./pedido-kanban-state";
+import { getBackgroundDragScrollLeft, groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult } from "./pedido-kanban-state";
 
 const pedidoStatuses = PEDIDO_STATUSES as readonly PedidoStatus[];
 
@@ -30,7 +30,7 @@ function Column({ status, children, count }: {
     <section
       ref={setNodeRef}
       aria-label={`${PEDIDO_STATUS_LABELS[status]}, ${count} pedidos`}
-      className={`min-h-[22rem] min-w-[17rem] flex-1 rounded-2xl border p-3 transition-colors ${
+      className={`min-h-[22rem] min-w-[15rem] flex-1 basis-0 rounded-2xl border p-3 transition-colors ${
         isOver ? "border-brand-mint bg-brand-mint/15" : "border-brand-gold/10 bg-white/65"
       }`}
     >
@@ -57,6 +57,10 @@ export default function PedidosKanban() {
   const pendingIdsRef = useRef<Set<number>>(new Set());
   const movesEpochRef = useRef(0);
   const timerRef = useRef<number | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const backgroundDragRef = useRef<{ pointerId: number; startX: number; scrollLeft: number } | null>(null);
+  const backgroundDragListenersRef = useRef<{ move: (event: PointerEvent) => void; stop: (event: PointerEvent) => void } | null>(null);
+  const [isDraggingBoard, setIsDraggingBoard] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -86,6 +90,56 @@ export default function PedidosKanban() {
       if (timerRef.current !== null) window.clearInterval(timerRef.current);
     };
   }, [load]);
+
+  const stopBackgroundDrag = useCallback(() => {
+    const listeners = backgroundDragListenersRef.current;
+    if (listeners) {
+      window.removeEventListener("pointermove", listeners.move);
+      window.removeEventListener("pointerup", listeners.stop);
+      window.removeEventListener("pointercancel", listeners.stop);
+    }
+    backgroundDragListenersRef.current = null;
+    backgroundDragRef.current = null;
+    setIsDraggingBoard(false);
+  }, []);
+
+  useEffect(() => () => {
+    const listeners = backgroundDragListenersRef.current;
+    if (listeners) {
+      window.removeEventListener("pointermove", listeners.move);
+      window.removeEventListener("pointerup", listeners.stop);
+      window.removeEventListener("pointercancel", listeners.stop);
+    }
+  }, []);
+
+  const handleBackgroundPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse" || !(event.target instanceof Element) || event.target.closest("article,button") !== null) return;
+
+    const board = boardRef.current;
+    if (!board) return;
+
+    event.preventDefault();
+    backgroundDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      scrollLeft: board.scrollLeft,
+    };
+    setIsDraggingBoard(true);
+
+    const move = (moveEvent: PointerEvent) => {
+      const drag = backgroundDragRef.current;
+      if (!drag || moveEvent.pointerId !== drag.pointerId || moveEvent.pointerType !== "mouse") return;
+      const currentBoard = boardRef.current;
+      if (currentBoard) currentBoard.scrollLeft = getBackgroundDragScrollLeft(drag.scrollLeft, drag.startX, moveEvent.clientX);
+    };
+    const stop = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId === event.pointerId) stopBackgroundDrag();
+    };
+    backgroundDragListenersRef.current = { move, stop };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  }, [stopBackgroundDrag]);
 
   const move = useCallback(async (id: number, status: PedidoStatus) => {
     const current = pedidos.find((pedido) => pedido.id === id);
@@ -126,9 +180,9 @@ export default function PedidosKanban() {
 
   if (loading) {
     return (
-      <div aria-label="Carregando pedidos" className="overflow-x-auto pb-4">
-        <div className="grid min-w-[85rem] grid-cols-5 gap-4">
-          {pedidoStatuses.map((status) => <div key={status} className="h-72 animate-pulse rounded-2xl bg-white shadow-card" />)}
+      <div aria-label="Carregando pedidos" className="max-h-[calc(100vh-8rem)] overflow-x-auto overflow-y-auto rounded-2xl p-2 pb-4">
+        <div className="flex w-full gap-4">
+          {pedidoStatuses.map((status) => <div key={status} className="h-72 min-w-[15rem] flex-1 basis-0 animate-pulse rounded-2xl bg-white shadow-card" />)}
         </div>
       </div>
     );
@@ -166,8 +220,12 @@ export default function PedidosKanban() {
           }
         }}
       >
-        <div className="linen-bg overflow-x-auto rounded-2xl p-2 pb-4">
-          <div className="flex min-w-[85rem] gap-4">
+        <div
+          ref={boardRef}
+          onPointerDown={handleBackgroundPointerDown}
+          className={`linen-bg max-h-[calc(100vh-8rem)] overflow-x-auto overflow-y-auto rounded-2xl p-2 pb-4 ${isDraggingBoard ? "cursor-grabbing" : "cursor-grab"}`}
+        >
+          <div className="flex w-full gap-4">
             {pedidoStatuses.map((status) => {
               const columnPedidos = grouped[status] || [];
               return (

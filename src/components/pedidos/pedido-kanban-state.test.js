@@ -2,10 +2,16 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  getBackgroundDragScrollLeft,
   groupPedidosByStatus,
   mergePollingPedidos,
   shouldApplyPollingResult,
 } = require("./pedido-kanban-state");
+
+test("calculates horizontal scroll while dragging the board background", () => {
+  assert.equal(getBackgroundDragScrollLeft(240, 180, 130), 290);
+  assert.equal(getBackgroundDragScrollLeft(240, 180, 225), 195);
+});
 
 test("polling does not overwrite a card with a pending local move", () => {
   const current = [{ id: 7, status: "passar" }];

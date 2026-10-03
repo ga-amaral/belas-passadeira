@@ -20,4 +20,8 @@ function shouldApplyPollingResult(epochAtStart, currentEpoch) {
   return epochAtStart === currentEpoch;
 }
 
-module.exports = { groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult };
+function getBackgroundDragScrollLeft(scrollLeftInicial, startX, clientX) {
+  return scrollLeftInicial - (clientX - startX);
+}
+
+module.exports = { getBackgroundDragScrollLeft, groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult };

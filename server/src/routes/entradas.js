@@ -45,7 +45,7 @@ router.post("/", upload.any(), async (req, res) => {
     .insert({
       client_id: clienteId, employee_id: employee.id,
       total_amount: pricing.total, volumes_json: JSON.stringify(pricing.volumes),
-      avulsos: Number(avulsos), status: "recebido",
+      avulsos: Number(avulsos), status: "entrada",
     })
     .select("*")
     .single();

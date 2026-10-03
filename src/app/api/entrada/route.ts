@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const { data: order, error: orderErr } = await db.from("orders").insert({
     client_id: clienteId, employee_id: employee.id,
     total_amount: pricing.total, volumes_json: JSON.stringify(pricing.volumes),
-    avulsos: Number(formData.get("avulsos")), status: "recebido",
+    avulsos: Number(formData.get("avulsos")), status: "entrada",
   }).select("*").single();
   if (orderErr) return NextResponse.json({ message: orderErr.message }, { status: 500 });
 

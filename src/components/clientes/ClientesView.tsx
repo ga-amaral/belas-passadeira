@@ -101,7 +101,7 @@ function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
               href={pedido.pdfUrl.startsWith("http") ? pedido.pdfUrl : `${BASE_URL}${pedido.pdfUrl}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-brand-rose underline"
+              className="text-xs text-brand-text underline"
               onClick={(e) => e.stopPropagation()}
             >
               PDF
@@ -329,7 +329,7 @@ export default function ClientesView() {
               className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8 hover:border-brand-gold/30 hover:shadow-md cursor-pointer transition-all group"
             >
               <div className="w-10 h-10 rounded-full bg-brand-rose/15 group-hover:bg-brand-gold/20 flex items-center justify-center shrink-0 transition-colors">
-                <span className="font-semibold text-brand-rose group-hover:text-brand-gold-dark transition-colors">{c.nome.charAt(0).toUpperCase()}</span>
+                <span className="font-semibold text-brand-text group-hover:text-brand-gold-dark transition-colors">{c.nome.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

@@ -10,14 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          bg: "#FAF7F2",
+          bg: "#F8F2FA",
           card: "#FFFFFF",
-          text: "#4A3F35",
-          gold: "#D4AF37",
-          "gold-light": "#E8C84A",
-          "gold-dark": "#B8971F",
-          rose: "#C9A9A6",
-          "rose-light": "#DFC4C1",
+          text: "#6B3267",
+          gold: "#A359A0",
+          "gold-light": "#C197D2",
+          "gold-dark": "#6B3267",
+          rose: "#F652A0",
+          "rose-light": "#FA86BD",
           mint: "#7D9B76",
           "mint-light": "#9AB893",
         },
@@ -27,10 +27,10 @@ const config: Config = {
         inter: ["var(--font-inter)", "sans-serif"],
       },
       boxShadow: {
-        gold: "0 4px 24px 0 rgba(212,175,55,0.10)",
-        "gold-md": "0 8px 32px 0 rgba(212,175,55,0.18)",
-        "gold-lg": "0 16px 48px 0 rgba(212,175,55,0.22)",
-        card: "0 2px 16px 0 rgba(74,63,53,0.07)",
+        gold: "0 4px 24px 0 rgba(163,89,160,0.10)",
+        "gold-md": "0 8px 32px 0 rgba(163,89,160,0.18)",
+        "gold-lg": "0 16px 48px 0 rgba(163,89,160,0.22)",
+        card: "0 2px 16px 0 rgba(107,50,103,0.07)",
       },
       borderRadius: {
         xl: "12px",

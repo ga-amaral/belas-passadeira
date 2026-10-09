@@ -260,7 +260,7 @@ export default function AdminDashboard() {
                     <div
                       className={`inline-flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-poppins font-semibold ${
                         metricasPeriodo.variacao >= 0
-                          ? "bg-brand-mint/15 text-brand-mint"
+                          ? "bg-emerald-600/15 text-brand-text"
                           : "bg-red-100 text-red-600"
                       }`}
                     >
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
                   <p className="text-lg sm:text-xl font-bold font-poppins text-brand-text mt-0.5">
                     {metricasPeriodo.pedidos}
                   </p>
-                  <span className="text-[10px] text-brand-mint font-inter">entradas</span>
+                  <span className="text-[10px] text-brand-text font-inter">entradas</span>
                 </div>
                 <div className="col-span-2 sm:col-span-1 bg-white/80 backdrop-blur rounded-xl p-3 border border-brand-gold/10">
                   <p className="text-[11px] text-brand-text/50 font-inter">Clientes Ativos</p>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
 
             {/* Card 2: Receita Semanal */}
             <div className="bg-white rounded-2xl p-5 shadow-card border border-brand-gold/10 flex items-start gap-4 hover:shadow-gold transition-all">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-brand-rose/10 text-brand-rose flex items-center justify-center shrink-0">
                 <Calendar size={24} strokeWidth={1.75} />
               </div>
               <div className="flex-1 min-w-0">
@@ -526,7 +526,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 flex items-center justify-between">
+                  <div className="p-3 rounded-xl bg-brand-rose/5 border border-brand-rose/10 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-3 h-3 rounded-full bg-brand-rose" />
                       <div>
@@ -540,7 +540,7 @@ export default function AdminDashboard() {
                       <p className="text-xs font-bold font-poppins text-brand-text">
                         {formatCurrency(mixReceita.recAvu)}
                       </p>
-                      <p className="text-[10px] text-brand-rose font-semibold">{mixReceita.percAvu}%</p>
+                      <p className="text-[10px] text-brand-text font-semibold">{mixReceita.percAvu}%</p>
                     </div>
                   </div>
                 </div>
@@ -597,7 +597,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-bold font-poppins text-brand-text">{formatCurrency(f.total)}</p>
-                            <span className="text-[10px] text-brand-mint font-semibold">{f.percentual}% da receita</span>
+                            <span className="text-[10px] text-brand-text font-semibold">{f.percentual}% da receita</span>
                           </div>
                         </div>
 
@@ -652,7 +652,7 @@ export default function AdminDashboard() {
                                     href={`https://wa.me/55${phoneClean}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-brand-mint hover:text-brand-mint-light transition-colors"
+                                    className="text-brand-text hover:text-brand-text-light transition-colors"
                                     title="Abrir WhatsApp"
                                   >
                                     <MessageCircle size={13} />
@@ -747,7 +747,7 @@ export default function AdminDashboard() {
                           <span
                             className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold font-poppins ${
                               pedido.status === "concluido" || pedido.status === "concluído"
-                                ? "bg-brand-mint/15 text-brand-mint"
+                                ? "bg-emerald-600/15 text-brand-text"
                                 : "bg-brand-gold/15 text-brand-gold-dark"
                             }`}
                           >

@@ -31,7 +31,7 @@ function Column({ status, children, count }: {
       ref={setNodeRef}
       aria-label={`${PEDIDO_STATUS_LABELS[status]}, ${count} pedidos`}
       className={`min-h-[22rem] min-w-[15rem] flex-1 basis-0 rounded-2xl border p-3 transition-colors ${
-        isOver ? "border-brand-mint bg-brand-mint/15" : "border-brand-gold/10 bg-white/65"
+        isOver ? "border-brand-gold bg-brand-gold/10" : "border-brand-gold/10 bg-white/65"
       }`}
     >
       <header className="mb-3 flex items-center justify-between gap-3">
@@ -223,7 +223,7 @@ export default function PedidosKanban() {
         <div
           ref={boardRef}
           onPointerDown={handleBackgroundPointerDown}
-          className={`linen-bg max-h-[calc(100vh-8rem)] overflow-x-auto overflow-y-auto rounded-2xl p-2 pb-4 ${isDraggingBoard ? "cursor-grabbing" : "cursor-grab"}`}
+          className={`bg-brand-bg max-h-[calc(100vh-8rem)] overflow-x-auto overflow-y-auto rounded-2xl p-2 pb-4 ${isDraggingBoard ? "cursor-grabbing" : "cursor-grab"}`}
         >
           <div className="flex w-full gap-4">
             {pedidoStatuses.map((status) => {

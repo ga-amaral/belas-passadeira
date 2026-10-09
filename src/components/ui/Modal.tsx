@@ -41,12 +41,12 @@ export default function Modal({ open, onClose, title, children, size = "md", hid
   return createPortal(
     <div
       className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(74,63,53,0.4)", backdropFilter: "blur(4px)" }}
+      style={{ backgroundColor: "rgba(107,50,103,0.4)", backdropFilter: "blur(4px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className={`modal-content relative w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-gold-lg flex flex-col max-h-[90vh]`}
-        style={{ border: "1px solid rgba(212,175,55,0.15)" }}
+        style={{ border: "1px solid rgba(163,89,160,0.15)" }}
       >
         {(title || !hideClose) && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gold/10 shrink-0">

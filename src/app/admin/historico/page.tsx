@@ -160,7 +160,7 @@ export default function HistoricoPage() {
                           <button
                             onClick={() => handleReenviar(e.id)}
                             disabled={reenviando === e.id}
-                            className="p-1.5 rounded-full hover:bg-brand-rose/10 text-brand-text/50 hover:text-brand-rose transition-all disabled:opacity-40"
+                            className="p-1.5 rounded-full hover:bg-brand-rose/10 text-brand-text/50 hover:text-brand-text transition-all disabled:opacity-40"
                             title="Reenviar WhatsApp"
                           >
                             <RefreshCw size={15} strokeWidth={1.5} className={reenviando === e.id ? "animate-spin" : ""} />
@@ -197,7 +197,7 @@ export default function HistoricoPage() {
               <div className="flex flex-col gap-2">
                 {selected.pecas.map((peca, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-brand-bg border border-brand-gold/8">
-                    <div className="w-8 h-8 rounded-lg bg-brand-rose/15 flex items-center justify-center text-xs font-semibold text-brand-rose">
+                    <div className="w-8 h-8 rounded-lg bg-brand-rose/15 flex items-center justify-center text-xs font-semibold text-brand-text">
                       {i + 1}
                     </div>
                     <div>

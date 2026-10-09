@@ -76,14 +76,14 @@ export default function EntradaPage() {
                 className={`
                   w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold font-poppins
                   transition-all duration-300
-                  ${i < step ? "bg-brand-mint text-white" : i === step ? "bg-brand-gold text-white shadow-gold" : "bg-white border-2 border-brand-gold/20 text-brand-text/40"}
+                  ${i < step ? "bg-emerald-600 text-white" : i === step ? "bg-brand-gold text-white shadow-gold" : "bg-white border-2 border-brand-gold/20 text-brand-text/40"}
                 `}
               >
                 {i < step ? <Check size={14} strokeWidth={2.5} /> : i + 1}
               </div>
               <span
                 className={`text-[11px] font-poppins transition-colors ${
-                  i === step ? "text-brand-gold font-semibold" : i < step ? "text-brand-mint" : "text-brand-text/30"
+                  i === step ? "text-brand-gold font-semibold" : i < step ? "text-brand-text" : "text-brand-text/30"
                 }`}
               >
                 {s.label}
@@ -92,7 +92,7 @@ export default function EntradaPage() {
             {i < STEPS.length - 1 && (
               <div
                 className={`w-16 h-0.5 mx-1 mb-4 transition-all duration-500 ${
-                  i < step ? "bg-brand-mint" : "bg-brand-gold/15"
+                  i < step ? "bg-emerald-600" : "bg-brand-gold/15"
                 }`}
               />
             )}

@@ -18,7 +18,7 @@ export default function EntradaLayout({ children }: { children: React.ReactNode 
   }, [router]);
 
   return (
-    <div className="min-h-screen linen-bg flex flex-col">
+    <div className="min-h-screen bg-brand-bg flex flex-col">
       <FuncionariaTopbar />
       <main className={`flex-1 p-6 mx-auto w-full ${isPedidosRoute ? "max-w-none" : "max-w-6xl"}`}>
         {children}

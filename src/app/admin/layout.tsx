@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router]);
 
   return (
-    <div className="flex h-screen overflow-hidden linen-bg">
+    <div className="flex h-screen overflow-hidden bg-brand-bg">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto scrollbar-thin">
         <div className={`p-8 mx-auto ${isPedidosRoute ? "max-w-none" : "max-w-7xl"}`}>

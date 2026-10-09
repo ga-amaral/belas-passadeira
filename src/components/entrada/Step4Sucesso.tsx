@@ -35,8 +35,8 @@ export default function Step4Sucesso({ cliente, entradaId, envioPdfFalhou, onNov
     <div className="flex flex-col items-center justify-center gap-6 py-12 max-w-md mx-auto text-center">
       {enviado ? (
         <>
-          <div className="w-20 h-20 rounded-full bg-brand-mint/15 flex items-center justify-center animate-scale-in">
-            <CheckCircle size={40} className="text-brand-mint" strokeWidth={1.5} />
+          <div className="w-20 h-20 rounded-full bg-emerald-600/15 flex items-center justify-center animate-scale-in">
+            <CheckCircle size={40} className="text-brand-text" strokeWidth={1.5} />
           </div>
           <div>
             <h2 className="text-2xl font-poppins font-bold text-brand-text">Registro concluído!</h2>

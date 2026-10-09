@@ -5,8 +5,8 @@ interface BadgeProps {
 
 const variantClasses = {
   gold: "bg-brand-gold/10 text-brand-gold-dark",
-  rose: "bg-brand-rose/15 text-brand-rose",
-  mint: "bg-brand-mint/15 text-brand-mint",
+  rose: "bg-brand-rose/15 text-brand-text",
+  mint: "bg-emerald-600/15 text-brand-text",
   gray: "bg-brand-text/10 text-brand-text/70",
 };
 

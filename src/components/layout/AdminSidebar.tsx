@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,7 +11,6 @@ import {
   History,
   Tag,
   LogOut,
-  Shirt,
   UserCircle,
 } from "lucide-react";
 import { clearAuth, getStoredUser } from "@/lib/auth";
@@ -47,15 +47,7 @@ export default function AdminSidebar() {
     <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col bg-white border-r border-brand-gold/10 shadow-card">
       {/* Logo */}
       <div className="px-6 py-6 border-b border-brand-gold/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-gold">
-            <Shirt size={18} className="text-white" strokeWidth={1.5} />
-          </div>
-          <div>
-            <p className="text-sm font-poppins font-semibold text-brand-text leading-tight">Belas</p>
-            <p className="text-xs text-brand-gold font-poppins font-medium">Passadeiras</p>
-          </div>
-        </div>
+        <Image src="/brand/logo-plum.png" alt="Belas Passadeiras" width={1446} height={503} className="h-auto w-44 max-w-full" />
       </div>
 
       {/* Nav */}
@@ -87,7 +79,7 @@ export default function AdminSidebar() {
       <div className="px-4 py-4 border-t border-brand-gold/10">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full bg-brand-rose/20 flex items-center justify-center">
-            <span className="text-sm font-medium text-brand-rose">
+            <span className="text-sm font-medium text-brand-text">
               {user?.name?.charAt(0).toUpperCase() ?? "A"}
             </span>
           </div>

@@ -47,7 +47,7 @@ export default function Step3Precificacao({ cliente, pecas, onConfirmar, onBack,
 
       <div className="bg-white rounded-xl p-4 shadow-card border border-brand-gold/8 flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-brand-rose/15 flex items-center justify-center">
-          <span className="font-semibold text-brand-rose">{cliente.nome.charAt(0)}</span>
+          <span className="font-semibold text-brand-text">{cliente.nome.charAt(0)}</span>
         </div>
         <div>
           <p className="font-poppins font-semibold text-brand-text">{cliente.nome}</p>
@@ -93,7 +93,7 @@ export default function Step3Precificacao({ cliente, pecas, onConfirmar, onBack,
         </div>
       )}
 
-      <div className="rounded-2xl p-5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #D4AF37 0%, #E8C84A 100%)" }}>
+      <div className="rounded-2xl p-5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #A359A0 0%, #C197D2 100%)" }}>
         <div>
           <p className="text-white/70 text-sm font-inter">Resumo da entrada</p>
           <p className="text-xl font-poppins font-bold text-white">Valores definidos pela administração</p>

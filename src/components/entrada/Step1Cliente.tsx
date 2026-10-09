@@ -124,7 +124,7 @@ export default function Step1Cliente({ onSelect }: Props) {
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-gold/5 transition-colors text-left group"
               >
                 <div className="w-8 h-8 rounded-full bg-brand-rose/15 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-brand-rose">{c.nome.charAt(0)}</span>
+                  <span className="text-xs font-semibold text-brand-text">{c.nome.charAt(0)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-poppins font-semibold text-brand-text text-sm truncate">{c.nome}</p>
@@ -241,7 +241,7 @@ export default function Step1Cliente({ onSelect }: Props) {
                   <p className="text-xs text-brand-text/50">Sacos utilizados</p>
                 </div>
                 <div className="p-3 rounded-xl bg-brand-bg border border-brand-gold/8 text-center">
-                  <p className="text-2xl font-bold font-poppins text-brand-rose">{showHistorico.data.itensEmpresa.cabides ?? 0}</p>
+                  <p className="text-2xl font-bold font-poppins text-brand-text">{showHistorico.data.itensEmpresa.cabides ?? 0}</p>
                   <p className="text-xs text-brand-text/50">Cabides utilizados</p>
                 </div>
               </div>

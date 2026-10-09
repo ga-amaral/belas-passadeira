@@ -10,14 +10,14 @@ export default function Spinner({ size = 40 }: { size?: number }) {
       >
         {/* Needle */}
         <g className="needle-animate">
-          <ellipse cx="20" cy="6" rx="3" ry="5" fill="#D4AF37" />
+          <ellipse cx="20" cy="6" rx="3" ry="5" fill="#A359A0" />
           <ellipse cx="20" cy="6" rx="1" ry="2" fill="white" />
-          <line x1="20" y1="11" x2="20" y2="38" stroke="#D4AF37" strokeWidth="1.5" />
+          <line x1="20" y1="11" x2="20" y2="38" stroke="#A359A0" strokeWidth="1.5" />
         </g>
         {/* Thread */}
         <path
           d="M20 11 Q30 20 20 29 Q10 38 20 38"
-          stroke="#C9A9A6"
+          stroke="#F652A0"
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"

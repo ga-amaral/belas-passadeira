@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Shirt } from "lucide-react";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { login as apiLogin } from "@/lib/api";
@@ -79,17 +80,14 @@ export default function LoginPage() {
       <div className="w-full max-w-sm relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gold-gradient shadow-gold-lg mb-4">
-            <Shirt size={28} className="text-white" strokeWidth={1.5} />
-          </div>
-          <h1 className="text-2xl font-poppins font-bold text-white">Belas Passadeiras</h1>
+          <Image src="/brand/logo-white.png" alt="Belas Passadeiras" width={1446} height={503} priority className="mx-auto mb-4 h-auto w-56 max-w-full" />
           <p className="text-sm text-white/60 mt-1 font-inter">Sistema de Gestão</p>
         </div>
 
         {/* Card */}
         <div
           className="bg-white rounded-2xl p-8 shadow-gold"
-          style={{ border: "1px solid rgba(212,175,55,0.12)" }}
+          style={{ border: "1px solid rgba(163,89,160,0.12)" }}
         >
           <h2 className="text-lg font-poppins font-semibold text-brand-text mb-6">Entrar na conta</h2>
 

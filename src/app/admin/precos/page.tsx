@@ -157,7 +157,7 @@ export default function PrecosPage() {
           {avulso && (
             <div className="bg-white rounded-2xl p-6 shadow-card border border-brand-gold/8">
               <div className="flex items-center gap-2 mb-5">
-                <Tag size={18} className="text-brand-rose" strokeWidth={1.5} />
+                <Tag size={18} className="text-brand-text" strokeWidth={1.5} />
                 <h2 className="font-poppins font-semibold text-brand-text">Peça Avulsa</h2>
               </div>
               <div className="flex items-center gap-4 p-3 rounded-xl bg-brand-bg border border-brand-gold/8">

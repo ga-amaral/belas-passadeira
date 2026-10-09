@@ -155,7 +155,7 @@ export default function FuncionariasPage() {
               className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 shadow-card border border-brand-gold/8 hover:border-brand-gold/30 hover:shadow-md cursor-pointer transition-all group"
             >
               <div className="w-9 h-9 rounded-full bg-brand-rose/20 group-hover:bg-brand-gold/20 flex items-center justify-center shrink-0 transition-colors">
-                <span className="text-sm font-semibold text-brand-rose group-hover:text-brand-gold-dark transition-colors">
+                <span className="text-sm font-semibold text-brand-text group-hover:text-brand-gold-dark transition-colors">
                   {f.name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -259,7 +259,7 @@ export default function FuncionariasPage() {
                 onClick={() => setFormEdit((p) => ({ ...p, ativo: true }))}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold font-poppins transition-colors ${
                   formEdit.ativo
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-brand-gold text-white"
                     : "bg-gray-100 text-brand-text/60 hover:bg-gray-200"
                 }`}
               >
@@ -270,7 +270,7 @@ export default function FuncionariasPage() {
                 onClick={() => setFormEdit((p) => ({ ...p, ativo: false }))}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold font-poppins transition-colors ${
                   !formEdit.ativo
-                    ? "bg-red-500 text-white"
+                    ? "bg-gray-500 text-white"
                     : "bg-gray-100 text-brand-text/60 hover:bg-gray-200"
                 }`}
               >

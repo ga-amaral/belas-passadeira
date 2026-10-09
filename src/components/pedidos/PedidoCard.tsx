@@ -69,7 +69,7 @@ export default function PedidoCard({ pedido, busy, onMove }: Props) {
         <div
           role="menu"
           aria-label={`Mover pedido de ${pedido.clienteNome || "cliente não informado"}`}
-          className="mt-2 grid gap-1 rounded-xl bg-linen-bg p-1"
+          className="mt-2 grid gap-1 rounded-xl bg-brand-bg p-1"
         >
           {nextStatuses.filter((status) => status !== pedido.status).map((status) => (
             <button
@@ -82,7 +82,7 @@ export default function PedidoCard({ pedido, busy, onMove }: Props) {
                 setMenuOpen(false);
                 onMove(pedido.id, status);
               }}
-              className="min-h-10 rounded-lg px-3 py-2 text-left text-sm text-brand-text transition-colors hover:bg-brand-mint/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-wait disabled:opacity-60"
+              className="min-h-10 rounded-lg px-3 py-2 text-left text-sm text-brand-text transition-colors hover:bg-brand-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-wait disabled:opacity-60"
             >
               {PEDIDO_STATUS_LABELS[status]}
             </button>

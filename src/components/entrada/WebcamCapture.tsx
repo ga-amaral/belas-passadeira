@@ -294,7 +294,7 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
         <div
           className="absolute inset-0 rounded-full"
           style={{
-            background: "conic-gradient(from 0deg, #D4AF37 0%, #E8C84A 20%, #D4AF37 40%, #B8971F 60%, #D4AF37 80%, #E8C84A 100%)",
+            background: "conic-gradient(from 0deg, #A359A0 0%, #C197D2 20%, #A359A0 40%, #6B3267 60%, #A359A0 80%, #C197D2 100%)",
             padding: "3px",
           }}
         >
@@ -321,7 +321,7 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
             {/* Mensagem de erro */}
             {error && (
               <div className="absolute inset-0 bg-brand-bg rounded-full flex flex-col items-center justify-center gap-3 p-6 text-center">
-                <AlertCircle size={28} className="text-brand-rose/60" strokeWidth={1.5} />
+                <AlertCircle size={28} className="text-brand-text/60" strokeWidth={1.5} />
                 <p className="text-xs text-brand-text/70 font-inter leading-relaxed">{error}</p>
                 <button
                   onClick={startCamera}
@@ -338,9 +338,9 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
         {/* Cabide decoration */}
         <div
           className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white shadow-gold flex items-center justify-center"
-          style={{ border: "1.5px solid rgba(212,175,55,0.3)" }}
+          style={{ border: "1.5px solid rgba(163,89,160,0.3)" }}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#A359A0" strokeWidth="1.5" strokeLinecap="round">
             <path d="M12 3a2 2 0 0 1 2 2v1L20 13H4L10 6V5a2 2 0 0 1 2-2z" />
             <path d="M4 13v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
           </svg>
@@ -353,7 +353,7 @@ export default function WebcamCapture({ onCapture, disabled }: Props) {
             disabled={disabled || tentando}
             title="Trocar câmera"
             className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white shadow-gold flex items-center justify-center disabled:opacity-50"
-            style={{ border: "1.5px solid rgba(212,175,55,0.3)" }}
+            style={{ border: "1.5px solid rgba(163,89,160,0.3)" }}
           >
             <SwitchCamera size={18} className="text-brand-gold" strokeWidth={1.5} />
           </button>

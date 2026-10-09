@@ -81,7 +81,7 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
         <div className="p-3 rounded-xl bg-white shadow-card border border-brand-gold/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-rose/15 flex items-center justify-center">
-              <span className="text-sm font-semibold text-brand-rose">{cliente.nome.charAt(0)}</span>
+              <span className="text-sm font-semibold text-brand-text">{cliente.nome.charAt(0)}</span>
             </div>
             <div>
               <p className="font-poppins font-semibold text-brand-text text-sm">{cliente.nome}</p>
@@ -152,7 +152,7 @@ export default function Step2Pecas({ cliente, pecas, onChange, onNext, onBack }:
                           onBlur={() => setEditandoId(null)}
                           onKeyDown={(e) => e.key === "Enter" && setEditandoId(null)}
                         />
-                        <button onClick={() => setEditandoId(null)} className="text-brand-mint">
+                        <button onClick={() => setEditandoId(null)} className="text-brand-text">
                           <Check size={14} strokeWidth={2} />
                         </button>
                       </div>

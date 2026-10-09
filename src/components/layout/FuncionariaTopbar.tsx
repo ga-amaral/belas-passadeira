@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, Shirt, Users } from "lucide-react";
+import Image from "next/image";
+import { LogOut, Users } from "lucide-react";
 import { clearAuth, getStoredUser } from "@/lib/auth";
 
 export default function FuncionariaTopbar() {
@@ -26,12 +27,7 @@ export default function FuncionariaTopbar() {
 
   return (
     <header className="w-full bg-white border-b border-brand-gold/10 shadow-card px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center shadow-gold">
-          <Shirt size={16} className="text-white" strokeWidth={1.5} />
-        </div>
-        <span className="font-poppins font-semibold text-brand-text text-sm">Belas Passadeiras</span>
-      </div>
+      <Image src="/brand/logo-plum.png" alt="Belas Passadeiras" width={1446} height={503} className="h-auto w-40 max-w-[35vw]" />
 
       <nav className="flex items-center gap-1">
         <Link
@@ -64,7 +60,7 @@ export default function FuncionariaTopbar() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-brand-rose/20 flex items-center justify-center">
-            <span className="text-xs font-medium text-brand-rose">{initial}</span>
+            <span className="text-xs font-medium text-brand-text">{initial}</span>
           </div>
           <span className="text-sm text-brand-text/70 font-poppins">{displayName}</span>
         </div>

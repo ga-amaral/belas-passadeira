@@ -19,6 +19,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Belas Passadeiras",
   description: "Sistema de gestão de lavanderia",
+  icons: { icon: [{ url: "/icon.png", type: "image/png" }, { url: "/favicon.ico", type: "image/x-icon" }], apple: "/brand/icon.png" },
 };
 
 export default function RootLayout({
@@ -36,12 +37,12 @@ export default function RootLayout({
             duration: 4000,
             style: {
               background: "#FFFFFF",
-              color: "#4A3F35",
-              border: "1px solid rgba(212,175,55,0.2)",
+              color: "#6B3267",
+              border: "1px solid rgba(163,89,160,0.2)",
               borderRadius: "12px",
               fontFamily: "var(--font-inter)",
               fontSize: "14px",
-              boxShadow: "0 4px 24px rgba(212,175,55,0.10)",
+              boxShadow: "0 4px 24px rgba(163,89,160,0.10)",
             },
             success: {
               iconTheme: { primary: "#7D9B76", secondary: "#FFFFFF" },

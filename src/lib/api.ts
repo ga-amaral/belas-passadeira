@@ -1,4 +1,4 @@
-import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo, PedidoKanban, PedidoStatus, PedidoStatusResponse, PedidosKanbanResponse } from "@/types";
+import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo, PedidoDetalhe, PedidoKanban, PedidoStatus, PedidoStatusResponse, PedidosKanbanResponse } from "@/types";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -106,6 +106,10 @@ export async function reenviarPdf(id: string): Promise<void> {
 export async function getPedidosKanban(): Promise<PedidoKanban[]> {
   const response = await request<PedidosKanbanResponse>("/pedidos");
   return response.pedidos;
+}
+
+export async function getPedidoDetalhe(id: number): Promise<PedidoDetalhe> {
+  return request<PedidoDetalhe>(`/pedidos/${id}`);
 }
 
 export async function updatePedidoStatus(id: number, status: PedidoStatus): Promise<PedidoStatusResponse> {

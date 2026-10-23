@@ -15,6 +15,7 @@ import { PEDIDO_STATUS_LABELS, PEDIDO_STATUSES } from "@/lib/domain/pedido-statu
 import { getPedidosKanban, updatePedidoStatus } from "@/lib/api";
 import type { PedidoKanban, PedidoStatus } from "@/types";
 import PedidoCard from "./PedidoCard";
+import PedidoDetalheModal from "./PedidoDetalheModal";
 import { getBackgroundDragScrollLeft, groupPedidosByStatus, mergePollingPedidos, shouldApplyPollingResult } from "./pedido-kanban-state";
 
 const pedidoStatuses = PEDIDO_STATUSES as readonly PedidoStatus[];
@@ -53,6 +54,7 @@ export default function PedidosKanban() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const pendingIdsRef = useRef<Set<number>>(new Set());
   const movesEpochRef = useRef(0);
@@ -178,6 +180,11 @@ export default function PedidosKanban() {
     [pedidos],
   );
 
+  const selectedPedido = useMemo(
+    () => pedidos.find((pedido) => pedido.id === selectedId) ?? null,
+    [pedidos, selectedId],
+  );
+
   if (loading) {
     return (
       <div aria-label="Carregando pedidos" className="max-h-[calc(100vh-8rem)] overflow-x-auto overflow-y-auto rounded-2xl p-2 pb-4">
@@ -231,7 +238,7 @@ export default function PedidosKanban() {
               return (
                 <Column key={status} status={status} count={columnPedidos.length}>
                   {columnPedidos.map((pedido) => (
-                    <PedidoCard key={pedido.id} pedido={pedido} busy={pendingIds.has(pedido.id)} onMove={move} />
+                    <PedidoCard key={pedido.id} pedido={pedido} busy={pendingIds.has(pedido.id)} onMove={move} onOpen={setSelectedId} />
                   ))}
                 </Column>
               );
@@ -239,6 +246,7 @@ export default function PedidosKanban() {
           </div>
         </div>
       </DndContext>
+      <PedidoDetalheModal pedido={selectedPedido} onClose={() => setSelectedId(null)} />
       {pedidos.length === 0 && <p className="text-center text-sm text-brand-text/50">Nenhum pedido encontrado.</p>}
     </div>
   );

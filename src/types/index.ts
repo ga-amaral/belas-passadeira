@@ -26,6 +26,17 @@ export interface PedidosKanbanResponse {
   pedidos: PedidoKanban[];
 }
 
+export interface PedidoPeca {
+  descricao: string;
+  tamanho?: string | null;
+  quantidade: number;
+  fotoUrl: string | null;
+}
+
+export interface PedidoDetalhe extends PedidoKanban {
+  pecas: PedidoPeca[];
+}
+
 export interface User {
   id: string;
   name: string;

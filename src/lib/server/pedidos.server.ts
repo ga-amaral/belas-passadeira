@@ -1,4 +1,4 @@
-import type { PedidoKanban, PedidoStatus, PedidoStatusResponse } from "@/types";
+import type { PedidoDetalhe, PedidoKanban, PedidoStatus, PedidoStatusResponse } from "@/types";
 
 type PedidoRow = Record<string, unknown> & {
   order_items?: Array<Record<string, unknown>> | null;
@@ -40,6 +40,40 @@ export async function listPedidosKanban(): Promise<PedidoKanban[]> {
     .limit(200);
   if (error) throw error;
   return ((data ?? []) as PedidoRow[]).map(mapPedidoKanban);
+}
+
+const PEDIDO_DETALHE_COLUMNS = "id, total_amount, status, created_at, clients:client_id(name), users:employee_id(name), order_items(quantity, manual_description, ai_description, size, image_url, image_path)";
+
+function pecaFotoUrl(item: Record<string, unknown>): string | null {
+  if (typeof item.image_url === "string" && item.image_url) return item.image_url;
+  if (typeof item.image_path === "string" && item.image_path) return `/uploads/${item.image_path}`;
+  return null;
+}
+
+export function mapPedidoDetalhe(row: PedidoRow): PedidoDetalhe {
+  const items = Array.isArray(row.order_items) ? row.order_items : [];
+
+  return {
+    ...mapPedidoKanban(row),
+    pecas: items.map((item) => ({
+      descricao: String(item.manual_description || item.ai_description || "Peça"),
+      tamanho: item.size ? String(item.size) : null,
+      quantidade: Math.max(1, Number(item.quantity) || 1),
+      fotoUrl: pecaFotoUrl(item),
+    })),
+  };
+}
+
+export async function getPedidoDetalhe(id: number): Promise<PedidoDetalhe | null> {
+  const { getDb } = await import("@/lib/server/db.server");
+  const { data, error } = await getDb()
+    .from("orders")
+    .select(PEDIDO_DETALHE_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return mapPedidoDetalhe(data as PedidoRow);
 }
 
 export async function updatePedidoStatus(id: number, status: PedidoStatus): Promise<PedidoStatusResponse | null> {

@@ -1,21 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { formatCurrency } from "@/lib/masks";
 import { PEDIDO_STATUS_LABELS, PEDIDO_STATUSES } from "@/lib/domain/pedido-status";
 import type { PedidoKanban, PedidoStatus } from "@/types";
 
+// Mesmo valor do activationConstraint.distance do PointerSensor no PedidosKanban:
+// movimentos >= 8px iniciam arrasto e não devem abrir o popup.
+const DRAG_CLICK_THRESHOLD = 8;
+
 type Props = {
   pedido: PedidoKanban;
   busy: boolean;
   onMove: (id: number, status: PedidoStatus) => void;
+  onOpen: (id: number) => void;
 };
 
-export default function PedidoCard({ pedido, busy, onMove }: Props) {
+export default function PedidoCard({ pedido, busy, onMove, onOpen }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const nextStatuses = PEDIDO_STATUSES as readonly PedidoStatus[];
+  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: pedido.id,
     disabled: busy,
@@ -25,14 +31,29 @@ export default function PedidoCard({ pedido, busy, onMove }: Props) {
     opacity: isDragging ? 0.55 : 1,
   };
 
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    pointerDownRef.current = { x: event.clientX, y: event.clientY };
+    listeners?.onPointerDown?.(event);
+  };
+
+  const handleClick = (event: ReactMouseEvent<HTMLElement>) => {
+    const start = pointerDownRef.current;
+    pointerDownRef.current = null;
+    if (!start) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= DRAG_CLICK_THRESHOLD) return;
+    onOpen(pedido.id);
+  };
+
   return (
     <article
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
+      onPointerDown={handlePointerDown}
+      onClick={handleClick}
       aria-busy={busy}
-      className="rounded-2xl border border-brand-gold/10 bg-white p-4 shadow-card transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+      className="cursor-pointer rounded-2xl border border-brand-gold/10 bg-white p-4 shadow-card transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-poppins font-semibold text-brand-text">
@@ -60,7 +81,10 @@ export default function PedidoCard({ pedido, busy, onMove }: Props) {
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         onPointerDown={(event) => event.stopPropagation()}
-        onClick={() => setMenuOpen((open) => !open)}
+        onClick={(event) => {
+          event.stopPropagation();
+          setMenuOpen((open) => !open);
+        }}
         className="mt-4 min-h-11 w-full rounded-xl border border-brand-gold/25 bg-white px-3 text-sm font-medium text-brand-text transition-colors hover:bg-brand-gold/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold disabled:cursor-wait disabled:opacity-60"
       >
         {busy ? "Movendo…" : "Mover"}
@@ -78,7 +102,8 @@ export default function PedidoCard({ pedido, busy, onMove }: Props) {
               role="menuitem"
               disabled={busy}
               onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 setMenuOpen(false);
                 onMove(pedido.id, status);
               }}

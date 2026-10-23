@@ -1,28 +1,34 @@
 import fs from "fs";
 import path from "path";
 
-const PROMPT = `Você é um especialista em lavanderia e passadoria de roupas.
-Analise a imagem e identifique a peça de roupa ou item têxtil visível (mesmo dobrada, estendida ou pendurada).
+const SYSTEM_PROMPT = `Você é um especialista em lavanderia e passadoria de roupas.
+Sua tarefa é identificar a peça de roupa ou item têxtil fotografado.
+
+Analise a imagem com atenção ANTES de responder:
+1. Observe a imagem inteira e encontre a peça de tecido que está no centro da foto (pode estar dobrada, amassada, estendida ou pendurada).
+2. Determine o tipo de peça, a cor e os detalhes visíveis (estampa, manga, textura, costuras).
+3. Ignore o fundo: mesa, mãos, pessoas, embalagens e qualquer objeto que não seja tecido.
 
 Retorne OBRIGATORIAMENTE um JSON válido com esta estrutura exata:
 {
-  "descricao": "Nome da peça com cor principal e características visíveis (ex: Camiseta preta, Calça jeans azul, Vestido estampado vermelho, Camisa social branca, Lençol casal bege, Toalha de banho azul)",
+  "descricao": "Nome da peça com cor e características visíveis (ex: Camiseta preta, Calça jeans azul, Vestido estampado vermelho, Camisa social branca, Lençol casal bege, Toalha de banho azul)",
   "tipo": "lencol" | "toalha" | "outro",
   "tamanho_sugerido": "Solteiro" | "Casal" | "Queen" | "King" | "Rosto" | "Banho" | "Piso" | null
 }
 
 Regras:
-1. Sempre descreva a cor e o tipo da peça quando for uma roupa ou têxtil reconhecível.
-2. Se a imagem for totalmente preta, vazia ou irreconhecível, retorne "Peça de roupa".
-3. Se for lençol ou toalha, sugira o tamanho provável em tamanho_sugerido; para outras peças, use null.`;
+1. Descreva somente o que estiver visível na foto. Nunca invente cor, tamanho ou tipo de peça.
+2. Mencione a cor apenas quando tiver certeza; sem certeza, descreva a peça sem citar cor.
+3. Se houver várias peças na foto, descreva a que estiver no centro / em foco.
+4. tipo = "lencol" somente para lençóis de cama; "toalha" para toalhas (banho, rosto, piso ou prato); "outro" para qualquer outra roupa.
+5. Preencha tamanho_sugerido somente para lençol (Solteiro, Casal, Queen, King) ou toalha (Rosto, Banho, Piso); nas demais peças use null.
+6. Use a resposta genérica APENAS quando a imagem estiver escura, borrada, vazia ou sem nenhum tecido visível: {"descricao": "Peça não identificada", "tipo": "outro", "tamanho_sugerido": null}.`;
 
-const MOCK = [
-  { descricao: "Camisa social branca masculina", tipo: "outro", tamanhoSugerido: null },
-  { descricao: "Calça jeans azul", tipo: "outro", tamanhoSugerido: null },
-  { descricao: "Vestido floral colorido", tipo: "outro", tamanhoSugerido: null },
-  { descricao: "Lençol de casal bege", tipo: "lencol", tamanhoSugerido: "Casal" },
-  { descricao: "Toalha de banho azul", tipo: "toalha", tamanhoSugerido: "Banho" },
-];
+const USER_PROMPT = "Identifique a peça de roupa ou têxtil presente nesta imagem.";
+
+function fallbackIdentificacao() {
+  return { descricao: "Peça não identificada", tipo: "outro", tamanhoSugerido: null };
+}
 
 function getApiKey(): string | undefined {
   if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
@@ -40,8 +46,8 @@ function getApiKey(): string | undefined {
 export async function identificarPeca(buffer: Buffer, mimeType: string) {
   const apiKey = getApiKey();
   if (!apiKey) {
-    console.warn("[OpenAI] Nenhuma OPENAI_API_KEY configurada. Usando mock.");
-    return MOCK[Math.floor(Math.random() * MOCK.length)];
+    console.warn("[OpenAI] OPENAI_API_KEY não configurada. Retornando \"Peça não identificada\".");
+    return fallbackIdentificacao();
   }
 
   try {
@@ -50,16 +56,20 @@ export async function identificarPeca(buffer: Buffer, mimeType: string) {
     const base64 = buffer.toString("base64");
 
     const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       response_format: { type: "json_object" },
-      max_tokens: 250,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: PROMPT },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" } },
-        ],
-      }],
+      temperature: 0,
+      max_completion_tokens: 250,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: USER_PROMPT },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" } },
+          ],
+        },
+      ],
     });
 
     const text = res.choices[0]?.message?.content?.trim() ?? "{}";
@@ -77,8 +87,8 @@ export async function identificarPeca(buffer: Buffer, mimeType: string) {
       tamanhoSugerido: json.tamanho_sugerido || null,
     };
   } catch (err) {
-    console.error("[OpenAI] Erro ao chamar gpt-4o-mini:", err instanceof Error ? err.message : err);
-    return MOCK[Math.floor(Math.random() * MOCK.length)];
+    console.error("[OpenAI] Erro ao identificar peça:", err instanceof Error ? err.message : err);
+    return fallbackIdentificacao();
   }
 }
 
@@ -97,9 +107,9 @@ export async function detectarPeca(buffer: Buffer, mimeType: string): Promise<bo
   const { OpenAI } = await import("openai");
   const openai = new OpenAI({ apiKey });
   const res = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
     response_format: { type: "json_object" },
-    max_tokens: 20,
+    max_completion_tokens: 20,
     messages: [{
       role: "user",
       content: [

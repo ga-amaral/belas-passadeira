@@ -8,8 +8,8 @@ const PEDIDO_STATUSES = Object.freeze([
 
 const PEDIDO_STATUS_LABELS = Object.freeze({
   entrada: "Entrada",
-  molho_secagem: "Molho e Secagem",
-  secar: "Secar",
+  molho_secagem: "Lavagem",
+  secar: "Secagem",
   passar: "Passar",
   concluido: "Concluído",
 });

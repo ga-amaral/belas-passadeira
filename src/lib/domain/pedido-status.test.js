@@ -17,8 +17,8 @@ test("exposes the five statuses in operational order and their labels", () => {
   ]);
   assert.deepEqual(PEDIDO_STATUS_LABELS, {
     entrada: "Entrada",
-    molho_secagem: "Molho e Secagem",
-    secar: "Secar",
+    molho_secagem: "Lavagem",
+    secar: "Secagem",
     passar: "Passar",
     concluido: "Concluído",
   });

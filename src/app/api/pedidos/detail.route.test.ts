@@ -13,7 +13,7 @@ test("GET authorizes admin and funcionaria without requireAdmin", () => {
 
 test("validates the numeric id before touching the database", () => {
   const parseCall = routeSource.indexOf("parsePedidoId(params.id)");
-  const detailCall = routeSource.indexOf("await getPedidoDetalhe(id)");
+  const detailCall = routeSource.indexOf("await getPedidoDetalhe(id, auth.user)");
   assert.ok(parseCall > -1, "GET must validate params.id with parsePedidoId");
   assert.ok(detailCall > -1, "GET must load the order detail with getPedidoDetalhe");
   assert.ok(parseCall < detailCall, "id validation must run before any database access");
@@ -37,13 +37,19 @@ test("GET keeps the { message } failure contract and returns the pedido payload"
   assert.match(routeSource, /message: "Pedido não encontrado\." \}, \{ status: 404 \}/);
   assert.match(routeSource, /NextResponse\.json\(pedido\)/);
   assert.match(routeSource, /message: "Erro ao carregar pedido\." \}, \{ status: 500 \}/);
-  assert.match(routeSource, /try \{[\s\S]*await getPedidoDetalhe\(id\)[\s\S]*\} catch \{/);
+  assert.match(routeSource, /try \{[\s\S]*await getPedidoDetalhe\(id, auth\.user\)[\s\S]*\} catch \{/);
 });
 
 test("detail service loads item photos, descriptions and quantities for one order", () => {
   const serviceSource = readFileSync("src/lib/server/pedidos.server.ts", "utf8");
-  assert.match(serviceSource, /export async function getPedidoDetalhe\(id: number\)/);
+  assert.match(serviceSource, /export async function getPedidoDetalhe\(id: number, user: \{ role: string \}\)/);
   assert.match(serviceSource, /\.eq\("id", id\)/);
   assert.match(serviceSource, /order_items\(quantity, manual_description, ai_description, size, image_url, image_path\)/);
   assert.match(serviceSource, /if \(!data\) return null;/);
+});
+
+test("detail query never selects total_amount for funcionaria", () => {
+  const serviceSource = readFileSync("src/lib/server/pedidos.server.ts", "utf8");
+  assert.match(serviceSource, /\.select\(pedidoDetalheSelect\(includeTotal\)\)/);
+  assert.match(serviceSource, /const includeTotal = isAdminPedidoRole\(user\)/);
 });

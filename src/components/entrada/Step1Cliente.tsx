@@ -8,6 +8,7 @@ import { mockClientes, mockHistorico, delay } from "@/lib/mocks";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import { getStoredUser } from "@/lib/auth";
 import { maskCpfCnpj, maskWhatsapp, maskCep, unmask, formatCurrency, formatDate } from "@/lib/masks";
 import toast from "react-hot-toast";
 
@@ -18,6 +19,7 @@ interface Props {
 const ESTADOS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 export default function Step1Cliente({ onSelect }: Props) {
+  const isAdmin = getStoredUser()?.role === "admin";
   const [query, setQuery] = useState("");
   const [resultados, setResultados] = useState<Cliente[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -251,7 +253,7 @@ export default function Step1Cliente({ onSelect }: Props) {
               {showHistorico.data.pedidos.map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-brand-bg border border-brand-gold/8 mb-2">
                   <p className="text-sm font-inter text-brand-text">{formatDate(p.data)}</p>
-                  <span className="font-semibold text-brand-gold">{formatCurrency(p.total)}</span>
+                  {isAdmin && <span className="font-semibold text-brand-gold">{formatCurrency(p.total)}</span>}
                 </div>
               ))}
             </div>

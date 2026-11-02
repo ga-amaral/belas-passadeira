@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const id = parsePedidoId(params.id);
   if (id === null) return NextResponse.json({ message: "ID de pedido inválido." }, { status: 400 });
   try {
-    const pedido = await getPedidoDetalhe(id);
+    const pedido = await getPedidoDetalhe(id, auth.user);
     if (!pedido) return NextResponse.json({ message: "Pedido não encontrado." }, { status: 404 });
     return NextResponse.json(pedido);
   } catch {

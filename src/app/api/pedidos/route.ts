@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Acesso não permitido." }, { status: 403 });
   }
   try {
-    return NextResponse.json({ pedidos: await listPedidosKanban() });
+    return NextResponse.json({ pedidos: await listPedidosKanban(auth.user) });
   } catch {
     return NextResponse.json({ message: "Erro ao carregar pedidos." }, { status: 500 });
   }

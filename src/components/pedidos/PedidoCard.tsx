@@ -66,9 +66,11 @@ export default function PedidoCard({ pedido, busy, onMove, onOpen }: Props) {
       <p className="mt-3 text-xs text-brand-text/60">
         Registrado por {pedido.funcionariaNome || "Não informado"}
       </p>
-      <p className="mt-1 font-poppins text-sm font-semibold text-brand-gold">
-        {formatCurrency(pedido.totalGeral)}
-      </p>
+      {pedido.totalGeral !== undefined && (
+        <p className="mt-1 font-poppins text-sm font-semibold text-brand-gold">
+          {formatCurrency(pedido.totalGeral)}
+        </p>
+      )}
       <p className="mt-1 text-xs text-brand-text/50">
         {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", {
           hour: "2-digit",

@@ -61,10 +61,12 @@ export default function PedidoDetalheModal({ pedido, onClose }: Props) {
         {pedido && (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-brand-gold/8 bg-brand-bg p-3">
-                <p className="text-xs text-brand-text/50">Total</p>
-                <p className="font-poppins text-xl font-bold text-brand-gold">{formatCurrency(pedido.totalGeral)}</p>
-              </div>
+              {pedido.totalGeral !== undefined && (
+                <div className="rounded-xl border border-brand-gold/8 bg-brand-bg p-3">
+                  <p className="text-xs text-brand-text/50">Total</p>
+                  <p className="font-poppins text-xl font-bold text-brand-gold">{formatCurrency(pedido.totalGeral)}</p>
+                </div>
+              )}
               <div className="rounded-xl border border-brand-gold/8 bg-brand-bg p-3">
                 <p className="text-xs text-brand-text/50">Status</p>
                 <p className="font-inter text-sm font-medium text-brand-text">{PEDIDO_STATUS_LABELS[pedido.status]}</p>

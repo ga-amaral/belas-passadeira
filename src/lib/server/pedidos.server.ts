@@ -8,41 +8,59 @@ export function isAllowedPedidoRole(user: { role: string }): boolean {
   return user.role === "admin" || user.role === "funcionaria";
 }
 
+export function isAdminPedidoRole(user: { role: string }): boolean {
+  return user.role === "admin";
+}
+
 export function parsePedidoId(raw: string): number | null {
   if (!/^\d+$/.test(raw)) return null;
   const id = Number(raw);
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-export function mapPedidoKanban(row: PedidoRow): PedidoKanban {
+export function pedidoKanbanSelect(includeTotal: boolean): string {
+  const columns = ["id", "status", "created_at", "clients:client_id(name)", "users:employee_id(name)", "order_items(quantity)"];
+  if (includeTotal) columns.unshift("total_amount");
+  return columns.join(", ");
+}
+
+export function mapPedidoKanban(row: PedidoRow, includeTotal: boolean): PedidoKanban {
   const client = row.clients as Record<string, unknown> | null;
   const employee = row.users as Record<string, unknown> | null;
   const items = Array.isArray(row.order_items) ? row.order_items : [];
   const quantity = items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 
-  return {
+  const pedido: PedidoKanban = {
     id: Number(row.id),
     clienteNome: String(client?.name ?? ""),
     quantidadePecas: quantity,
     funcionariaNome: String(employee?.name ?? ""),
-    totalGeral: Number(row.total_amount) || 0,
     status: String(row.status) as PedidoKanban["status"],
     createdAt: String(row.created_at ?? ""),
   };
+
+  if (includeTotal) pedido.totalGeral = Number(row.total_amount) || 0;
+
+  return pedido;
 }
 
-export async function listPedidosKanban(): Promise<PedidoKanban[]> {
+export async function listPedidosKanban(user: { role: string }): Promise<PedidoKanban[]> {
+  const includeTotal = isAdminPedidoRole(user);
   const { getDb } = await import("@/lib/server/db.server");
   const { data, error } = await getDb()
     .from("orders")
-    .select("id, total_amount, status, created_at, clients:client_id(name), users:employee_id(name), order_items(quantity)")
+    .select(pedidoKanbanSelect(includeTotal))
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) throw error;
-  return ((data ?? []) as PedidoRow[]).map(mapPedidoKanban);
+  return ((data ?? []) as unknown as PedidoRow[]).map((row) => mapPedidoKanban(row, includeTotal));
 }
 
-const PEDIDO_DETALHE_COLUMNS = "id, total_amount, status, created_at, clients:client_id(name), users:employee_id(name), order_items(quantity, manual_description, ai_description, size, image_url, image_path)";
+export function pedidoDetalheSelect(includeTotal: boolean): string {
+  const columns = ["id", "status", "created_at", "clients:client_id(name)", "users:employee_id(name)", "order_items(quantity, manual_description, ai_description, size, image_url, image_path)"];
+  if (includeTotal) columns.unshift("total_amount");
+  return columns.join(", ");
+}
 
 function pecaFotoUrl(item: Record<string, unknown>): string | null {
   if (typeof item.image_url === "string" && item.image_url) return item.image_url;
@@ -50,11 +68,11 @@ function pecaFotoUrl(item: Record<string, unknown>): string | null {
   return null;
 }
 
-export function mapPedidoDetalhe(row: PedidoRow): PedidoDetalhe {
+export function mapPedidoDetalhe(row: PedidoRow, includeTotal = true): PedidoDetalhe {
   const items = Array.isArray(row.order_items) ? row.order_items : [];
 
   return {
-    ...mapPedidoKanban(row),
+    ...mapPedidoKanban(row, includeTotal),
     pecas: items.map((item) => ({
       descricao: String(item.manual_description || item.ai_description || "Peça"),
       tamanho: item.size ? String(item.size) : null,
@@ -64,16 +82,17 @@ export function mapPedidoDetalhe(row: PedidoRow): PedidoDetalhe {
   };
 }
 
-export async function getPedidoDetalhe(id: number): Promise<PedidoDetalhe | null> {
+export async function getPedidoDetalhe(id: number, user: { role: string }): Promise<PedidoDetalhe | null> {
+  const includeTotal = isAdminPedidoRole(user);
   const { getDb } = await import("@/lib/server/db.server");
   const { data, error } = await getDb()
     .from("orders")
-    .select(PEDIDO_DETALHE_COLUMNS)
+    .select(pedidoDetalheSelect(includeTotal))
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  return mapPedidoDetalhe(data as PedidoRow);
+  return mapPedidoDetalhe(data as unknown as PedidoRow, includeTotal);
 }
 
 export async function updatePedidoStatus(id: number, status: PedidoStatus): Promise<PedidoStatusResponse | null> {

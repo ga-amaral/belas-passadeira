@@ -12,7 +12,7 @@ export interface PedidoKanban {
   clienteNome: string;
   quantidadePecas: number;
   funcionariaNome: string;
-  totalGeral: number;
+  totalGeral?: number;
   status: PedidoStatus;
   createdAt: string;
 }

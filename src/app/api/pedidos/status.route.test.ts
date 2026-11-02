@@ -59,6 +59,12 @@ test("PATCH keeps the { message } contract for every failure and has no requireA
   assert.match(routeSource, /message: "Erro ao atualizar pedido\." \}, \{ status: 500 \}/);
 });
 
+test("PATCH response carries no monetary field for funcionaria or admin", () => {
+  assert.doesNotMatch(routeSource, /totalGeral|total_amount/);
+  const serviceSource = readFileSync("src/lib/server/pedidos.server.ts", "utf8");
+  assert.match(serviceSource, /\.select\("id, status"\)/);
+});
+
 test("service updates orders by integer id and returns { id: number, status }", () => {
   const serviceSource = readFileSync("src/lib/server/pedidos.server.ts", "utf8");
   assert.match(serviceSource, /export async function updatePedidoStatus\(id: number, status: PedidoStatus\)/);

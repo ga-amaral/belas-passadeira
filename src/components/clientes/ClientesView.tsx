@@ -77,7 +77,7 @@ function PecasFotos({ pecas }: { pecas: HistoricoPedido["pecas"] }) {
   );
 }
 
-function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
+function PedidoCard({ pedido, isAdmin }: { pedido: HistoricoPedido; isAdmin: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const temFotos = pedido.pecas.some((p) => p.fotoUrl);
   const totalPecas = pedido.pecas.reduce((t, p) => t + (p.quantidade ?? 1), 0);
@@ -95,7 +95,7 @@ function PedidoCard({ pedido }: { pedido: HistoricoPedido }) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-semibold text-brand-gold font-poppins">{formatCurrency(pedido.total)}</span>
+          {isAdmin && <span className="font-semibold text-brand-gold font-poppins">{formatCurrency(pedido.total)}</span>}
           {pedido.pdfUrl && (
             <a
               href={pedido.pdfUrl.startsWith("http") ? pedido.pdfUrl : `${BASE_URL}${pedido.pdfUrl}`}
@@ -402,7 +402,7 @@ export default function ClientesView() {
             ) : (
               <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-1">
                 {historico.data.pedidos.map((p) => (
-                  <PedidoCard key={p.id} pedido={p} />
+                  <PedidoCard key={p.id} pedido={p} isAdmin={isAdmin} />
                 ))}
               </div>
             )}

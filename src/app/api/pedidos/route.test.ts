@@ -11,10 +11,21 @@ test("GET authorizes admin and funcionaria without requireAdmin", () => {
   assert.match(routeSource, /if \(!isAllowedPedidoRole\(auth\.user\)\)/);
 });
 
+test("GET passes the server-validated user to the service so the role is never client-controlled", () => {
+  assert.match(routeSource, /listPedidosKanban\(auth\.user\)/);
+  assert.doesNotMatch(routeSource, /searchParams.*role/i);
+  assert.doesNotMatch(routeSource, /req\.json/);
+  assert.doesNotMatch(routeSource, /body\.role|query\.role|headers\.get\("role"\)/i);
+});
+
 test("GET keeps the { message } failure contract and the { pedidos } payload", () => {
   assert.match(routeSource, /NextResponse\.json\(\{ message: auth\.error \}, \{ status: auth\.status \}\)/);
   assert.match(routeSource, /message: "Acesso não permitido\." \}, \{ status: 403 \}/);
-  assert.match(routeSource, /NextResponse\.json\(\{ pedidos: await listPedidosKanban\(\) \}\)/);
+  assert.match(routeSource, /NextResponse\.json\(\{ pedidos: await listPedidosKanban\(auth\.user\) \}\)/);
   assert.match(routeSource, /message: "Erro ao carregar pedidos\." \}, \{ status: 500 \}/);
-  assert.match(routeSource, /try \{[\s\S]*await listPedidosKanban\(\)[\s\S]*\} catch \{/);
+  assert.match(routeSource, /try \{[\s\S]*await listPedidosKanban\(auth\.user\)[\s\S]*\} catch \{/);
+});
+
+test("GET never exposes totalGeral directly; the service decides per role", () => {
+  assert.doesNotMatch(routeSource, /totalGeral|total_amount/);
 });

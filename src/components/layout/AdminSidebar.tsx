@@ -14,6 +14,8 @@ import {
   UserCircle,
 } from "lucide-react";
 import { clearAuth, getStoredUser } from "@/lib/auth";
+import type { User } from "@/types";
+import ProfileModal from "./ProfileModal";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -27,7 +29,8 @@ const navItems = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -77,7 +80,7 @@ export default function AdminSidebar() {
 
       {/* User */}
       <div className="px-4 py-4 border-t border-brand-gold/10">
-        <div className="flex items-center gap-3 mb-3">
+        <button type="button" onClick={() => setProfileOpen(true)} className="mb-3 flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-brand-gold/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-gold">
           <div className="w-8 h-8 rounded-full bg-brand-rose/20 flex items-center justify-center">
             <span className="text-sm font-medium text-brand-text">
               {user?.name?.charAt(0).toUpperCase() ?? "A"}
@@ -87,7 +90,7 @@ export default function AdminSidebar() {
             <p className="text-xs font-semibold font-poppins text-brand-text truncate">{user?.name ?? "Admin"}</p>
             <p className="text-[11px] text-brand-text/40 truncate">{user?.email ?? ""}</p>
           </div>
-        </div>
+        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-brand-text/50 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
@@ -96,6 +99,7 @@ export default function AdminSidebar() {
           <span className="font-poppins">Sair</span>
         </button>
       </div>
+      <ProfileModal open={profileOpen} user={user} onClose={() => setProfileOpen(false)} onUpdated={setUser} />
     </aside>
   );
 }

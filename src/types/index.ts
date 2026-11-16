@@ -37,6 +37,18 @@ export interface PedidoDetalhe extends PedidoKanban {
   pecas: PedidoPeca[];
 }
 
+export interface PecaPerdida {
+  id: number;
+  pedidoId: number;
+  clienteId: number;
+  clienteNome: string;
+  descricao: string;
+  tamanho: string | null;
+  quantidade: number;
+  fotoUrl: string | null;
+  pedidoData: string;
+}
+
 export interface User {
   id: string;
   name: string;

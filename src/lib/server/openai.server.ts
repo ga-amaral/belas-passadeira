@@ -121,3 +121,87 @@ export async function detectarPeca(buffer: Buffer, mimeType: string): Promise<bo
   const json = JSON.parse(res.choices[0]?.message?.content?.trim() ?? "{}") as { tem_peca?: boolean };
   return json.tem_peca === true;
 }
+
+const BUSCA_IMAGEM_PROMPT = `Você é um especialista em lavanderia e passadoria de roupas.
+Sua tarefa é comparar a foto de uma peça perdida com uma lista de peças candidatas e dizer quais candidatas parecem ser a MESMA peça da foto.
+
+Regras:
+1. Considere cor, tipo de peça, estampa, tecido e detalhes visíveis.
+2. Seja rigoroso: inclua um id somente quando houver semelhança clara. Em caso de dúvida, NÃO inclua.
+3. Use apenas ids que estejam na lista de candidatas; nunca invente ids.
+4. Não reordene nem crie descrições; apenas filtre.
+5. Responda OBRIGATORIAMENTE um JSON válido com esta estrutura exata: {"ids": [1, 2]}
+6. Se nenhuma candidata corresponder, responda {"ids": []}.`;
+
+export interface CandidatoPecaImagem {
+  id: number;
+  descricao: string;
+  clienteNome?: string;
+}
+
+export function formatarListaCandidatos(candidatos: CandidatoPecaImagem[]): string {
+  return candidatos
+    .map((c) =>
+      c.clienteNome
+        ? `- id ${c.id}: ${c.descricao} (cliente: ${c.clienteNome})`
+        : `- id ${c.id}: ${c.descricao}`,
+    )
+    .join("\n");
+}
+
+export async function encontrarPecasPorImagem(
+  buffer: Buffer,
+  mimeType: string,
+  candidatos: CandidatoPecaImagem[],
+): Promise<number[]> {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
+  if (candidatos.length === 0) return [];
+
+  const { OpenAI } = await import("openai");
+  const openai = new OpenAI({ apiKey });
+  const lista = formatarListaCandidatos(candidatos);
+
+  const res = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    temperature: 0,
+    max_completion_tokens: 500,
+    messages: [
+      { role: "system", content: BUSCA_IMAGEM_PROMPT },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Peças candidatas (id: descrição):\n${lista}\n\nQuais ids correspondem à peça desta foto? Responda somente com o JSON {"ids": [...]}.`,
+          },
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${buffer.toString("base64")}`, detail: "high" },
+          },
+        ],
+      },
+    ],
+  });
+
+  const text = res.choices[0]?.message?.content?.trim() ?? "{}";
+  let json: { ids?: unknown } = {};
+  try {
+    json = JSON.parse(text);
+  } catch {
+    const cleaned = text.replace(/```json\n?|```/g, "").trim();
+    json = JSON.parse(cleaned);
+  }
+
+  const validos = new Set(candidatos.map((c) => c.id));
+  const encontrados: number[] = [];
+  const rawIds = Array.isArray(json.ids) ? json.ids : [];
+  for (const raw of rawIds) {
+    const id = Number(raw);
+    if (Number.isSafeInteger(id) && validos.has(id) && !encontrados.includes(id)) {
+      encontrados.push(id);
+    }
+  }
+  return encontrados;
+}

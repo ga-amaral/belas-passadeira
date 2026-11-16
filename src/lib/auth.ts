@@ -19,6 +19,10 @@ export function getStoredUser(): User | null {
   }
 }
 
+export function updateStoredUser(user: User): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);

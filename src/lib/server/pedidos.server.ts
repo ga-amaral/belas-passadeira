@@ -62,10 +62,22 @@ export function pedidoDetalheSelect(includeTotal: boolean): string {
   return columns.join(", ");
 }
 
-function pecaFotoUrl(item: Record<string, unknown>): string | null {
+export function pecaFotoUrl(item: Record<string, unknown>): string | null {
   if (typeof item.image_url === "string" && item.image_url) return item.image_url;
   if (typeof item.image_path === "string" && item.image_path) return `/uploads/${item.image_path}`;
   return null;
+}
+
+export function pecaDescricao(item: Record<string, unknown>): string {
+  return String(item.manual_description || item.ai_description || "Peça");
+}
+
+export function pecaTamanho(item: Record<string, unknown>): string | null {
+  return item.size ? String(item.size) : null;
+}
+
+export function pecaQuantidade(item: Record<string, unknown>): number {
+  return Math.max(1, Number(item.quantity) || 1);
 }
 
 export function mapPedidoDetalhe(row: PedidoRow, includeTotal = true): PedidoDetalhe {
@@ -74,9 +86,9 @@ export function mapPedidoDetalhe(row: PedidoRow, includeTotal = true): PedidoDet
   return {
     ...mapPedidoKanban(row, includeTotal),
     pecas: items.map((item) => ({
-      descricao: String(item.manual_description || item.ai_description || "Peça"),
-      tamanho: item.size ? String(item.size) : null,
-      quantidade: Math.max(1, Number(item.quantity) || 1),
+      descricao: pecaDescricao(item),
+      tamanho: pecaTamanho(item),
+      quantidade: pecaQuantidade(item),
       fotoUrl: pecaFotoUrl(item),
     })),
   };

@@ -1,4 +1,4 @@
-import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo, PedidoDetalhe, PedidoKanban, PedidoStatus, PedidoStatusResponse, PedidosKanbanResponse } from "@/types";
+import { AuthResponse, Cliente, Entrada, EntradaPayload, Funcionaria, HistoricoCliente, Preco, OpcaoPreco, DashboardResumo, PedidoDetalhe, PedidoKanban, PedidoStatus, PedidoStatusResponse, PedidosKanbanResponse, PecaPerdida, User } from "@/types";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -35,6 +35,10 @@ export async function login(email: string, senha: string): Promise<AuthResponse>
   return request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, senha }) });
 }
 
+export async function atualizarPerfil(data: { name?: string; senhaAtual?: string; novaSenha?: string; confirmarSenha?: string }): Promise<{ user: User }> {
+  return request("/auth/perfil", { method: "PUT", body: JSON.stringify(data) });
+}
+
 // Funcionárias
 export async function getFuncionarias(): Promise<Funcionaria[]> {
   return request<Funcionaria[]>("/funcionarias");
@@ -62,6 +66,27 @@ export async function updateCliente(id: string, data: Partial<Omit<Cliente, "id"
 export async function getHistoricoCliente(id: string): Promise<HistoricoCliente> {
   return request<HistoricoCliente>(`/clientes/${id}/historico`);
 }
+
+// Peças perdidas
+export async function searchPecasPerdidas(clienteId?: string, q = ""): Promise<PecaPerdida[]> {
+  const params = new URLSearchParams();
+  if (clienteId) params.set("clienteId", clienteId);
+  if (q.trim()) params.set("q", q.trim());
+  const response = await request<{ pecas: PecaPerdida[] }>(`/perdidos?${params.toString()}`);
+  return response.pecas;
+}
+
+export async function searchPecasPerdidasPorImagem(foto: File, clienteId?: string): Promise<{ pecas: PecaPerdida[]; limitado?: boolean }> {
+  const formData = new FormData();
+  formData.append("foto", foto, foto.name || "peca-perdida.jpg");
+  if (clienteId) formData.append("clienteId", clienteId);
+  const response = await request<{ pecas: PecaPerdida[]; limitado?: boolean }>("/perdidos/buscar-imagem", {
+    method: "POST",
+    body: formData,
+  });
+  return response;
+}
+
 export async function deleteCliente(id: string): Promise<void> {
   return request<void>(`/clientes/${id}`, { method: "DELETE" });
 }
